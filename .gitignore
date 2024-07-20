@@ -1,0 +1,6 @@
+/archive
+/drugs
+/kubernetes
+.env
+*.log
+*.txt

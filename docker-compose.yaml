@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend_service
+    ports:
+      - "8000:8000"
+    networks:
+      - drugs-network
+    volumes:
+      - ./backend:/backend
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_service
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    networks:
+      - drugs-network
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/frontend:rw,delegated
+    # command: ["streamlit", "run", "app/main.py"]
+    restart: unless-stopped
+
+networks:
+  drugs-network:
+    driver: bridge
