@@ -36,6 +36,47 @@ posthog = Posthog(project_api_key=posthog_key, host='https://us.i.posthog.com')
 
 posthog.capture('distinct_id_of_the_user', '$pageview', {'$current_url': domain})
 
+def inject_ga():
+    
+    # new tag method
+    GA_ID = "google_analytics"
+    # NOTE: you should add id="google_analytics" value in the GA script
+    # https://developers.google.com/analytics/devguides/collection/analyticsjs
+    GA_JS = """
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SY9SGNP6C2" id="google_analytics"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-SY9SGNP6C2');
+    </script>
+    """
+    
+    # Insert the script in the head tag of the static template inside your virtual
+    index_path = pathlib.Path("index.html")
+    soup = BeautifulSoup(index_path.read_text(), features="lxml")
+    if not soup.find(id=GA_ID):  # if cannot find tag
+        bck_index = index_path.with_suffix('.bck')
+        if bck_index.exists():
+            shutil.copy(bck_index, index_path)  # recover from backup
+        else:
+            shutil.copy(index_path, bck_index)  # keep a backup
+        html = str(soup)
+        new_html = html.replace('<head>', '<head>\n' + GA_JS)
+        index_path.write_text(new_html)
+    
+def page_header():
+    st.set_page_config(
+        page_title="Busca tu Pepa",
+        page_icon="🏥",
+        # layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    inject_ga()
+    
+page_header()
 
 #@st.cache_data(ttl=600)
 def mongo_consult(consult_body):
