@@ -3,4 +3,3 @@
 /kubernetes
 .env
 *.log
-*.txt
