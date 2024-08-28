@@ -46,3 +46,4 @@ CMD ["/bin/bash", "initializer.sh"]
 
 #CMD ["fastapi", "run", "app/main.py", "--host", "0.0.0.0", "--port", "8000"]
 
+LABEL org.opencontainers.image.source https://github.com/mrcord/howtofinddrugsonline
