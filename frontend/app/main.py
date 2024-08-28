@@ -1,420 +1,62 @@
 import streamlit as st
-import requests
-import pandas as pd
-
-import re
-import time
-
-# --- Envs ---
-
 from dotenv import load_dotenv
 import os
+from analytics import initialize_posthog, capture_pageview, load_gtm  # Import the load_gtm function
+from utils import display_chat_messages, stream_data, disable
+from consultations import fetch_unique_drugs_and_districts, handle_form_submission, handle_db_consultation
 
-# --- Analytics ---
-
-from posthog import Posthog
-import uuid
-
-
-load_dotenv()
-
+# Streamlit Config
 st.set_page_config(
     page_title="Busca tu Pepa",
     page_icon="🏥",
-    layout="wide",
+    # layout="wide",
     initial_sidebar_state="expanded",
 )
 
+
+# Load environment variables
+load_dotenv()
+
+# Load Google Tag Manager
+load_gtm('G-SY9SGNP6C2')  # Replace 'GTM-XXXXXXX' with your GTM ID
+
+
 st.title("Busca tu Pepa 💊")
 
-backend_url = os.environ.get("BACKEND_URL")
-domain = os.environ.get("DOMAIN")
-posthog_key = os.environ.get("POSTHOG_API_KEY")
+# Initialize Analytics
+posthog = initialize_posthog()
+capture_pageview(posthog)
 
-
-posthog = Posthog(project_api_key=posthog_key, host='https://us.i.posthog.com')
-
-posthog.capture('distinct_id_of_the_user', '$pageview', {'$current_url': domain})
-
-def inject_ga():
-    
-    # new tag method
-    GA_ID = "google_analytics"
-    # NOTE: you should add id="google_analytics" value in the GA script
-    # https://developers.google.com/analytics/devguides/collection/analyticsjs
-    GA_JS = """
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SY9SGNP6C2" id="google_analytics"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-SY9SGNP6C2');
-    </script>
-    """
-    
-    # Insert the script in the head tag of the static template inside your virtual
-    index_path = pathlib.Path("index.html")
-    soup = BeautifulSoup(index_path.read_text(), features="lxml")
-    if not soup.find(id=GA_ID):  # if cannot find tag
-        bck_index = index_path.with_suffix('.bck')
-        if bck_index.exists():
-            shutil.copy(bck_index, index_path)  # recover from backup
-        else:
-            shutil.copy(index_path, bck_index)  # keep a backup
-        html = str(soup)
-        new_html = html.replace('<head>', '<head>\n' + GA_JS)
-        index_path.write_text(new_html)
-    
-def page_header():
-    st.set_page_config(
-        page_title="Busca tu Pepa",
-        page_icon="🏥",
-        # layout="wide",
-        initial_sidebar_state="expanded",
-    )
-    inject_ga()
-    
-page_header()
-
-#@st.cache_data(ttl=600)
-def mongo_consult(consult_body):
-    try:
-        response = requests.post(f"{backend_url}/v1/consult_mongo", json=consult_body)
-        
-        if response.status_code == 200:
-            response_json = response.json()
-            return response_json.get('documents', [])
-        else:
-            return []
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-        return []
-    
-
-# Define the consultation bodies for MongoDB
-consult_unique_drugs = {
-    "db": "health",
-    "collection": "drugs",
-    "aggregation": [
-        {"$group": {
-                "_id": {
-                    "searchTerm": "$searchTerm",
-                    "concent": "$producto.concent",
-                    "nombreFormaFarmaceutica": "$producto.nombreFormaFarmaceutica"
-                }}},
-        {"$sort": {
-                "_id.searchTerm": 1,
-                "_id.concent": 1,
-                "_id.nombreFormaFarmaceutica": 1
-            }},
-        {"$project": {
-                "_id": 0,
-                "searchTerm": "$_id.searchTerm",
-                "concent": "$_id.concent",
-                "nombreFormaFarmaceutica": "$_id.nombreFormaFarmaceutica"
-            }}
-    ]
-}
-
-consult_unique_distritos = {
-    "db": "peru",
-    "collection": "districts",
-    "aggregation": [
-        {"$project": {"_id": 0, "descripcion": 1}},
-        {"$sort": {"descripcion": 1}}
-    ]
-}
-
-
-# Function to extract the numerical part of the concentration using regular expressions
-def get_numerical_concent(concent):
-    numbers = re.findall(r'\d+\.?\d*', concent)  # Find all numbers (integers or decimals)
-    return float(numbers[0]) if numbers else 0  # Convert the first found number to float, default to 0 if none found
-
-
-
-def display_chat_messages() -> None:
-    """Print message history
-    @returns None
-    """
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"],avatar="🧑‍⚕️"):
-            st.markdown(message["content"])
-
-def stream_data(string):
-    for word in string.split(" "):
-        yield word + " "
-        time.sleep(0.06)
-        
-        
-# Disable the submit button after it is clicked
-def disable():
-    st.session_state.disabled = True
-
-# Initialize disabled for form_submit_button to False
+# Session State Initialization
 if "disabled" not in st.session_state:
     st.session_state.disabled = False
-    
-col1, col2, col3 = st.columns([0.2, 0.5, 0.2])
 
-
-# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if 'concentrations_shown' not in st.session_state:
-    st.session_state['concentrations_shown'] = False 
-    st.session_state['clicked_concentration'] = None
+    st.session_state.concentrations_shown = []
 
-# Display chat messages from history on app rerun
-display_chat_messages()
-
-# Initialize session state variables if they don't exist
 if 'greetings_shown' not in st.session_state:
     st.session_state['greetings_shown'] = False
-    
+
 if 'form_submitted' not in st.session_state:
     st.session_state['form_submitted'] = False
 
-
-if not st.session_state.greetings_shown:
-    
-    with st.spinner('🤖 Iniciando Inteligencia Artificial...'):
-        # time.sleep(5)
-
-        # Fetch unique drug and district names
-        unique_drugs = mongo_consult(consult_unique_drugs)
-
-        # Assuming unique_drugs is a list of dictionaries as described
-        for drug in unique_drugs:
-            # Concatenate the required strings and add them under the new key 'formOption'
-            drug['formOption'] = f"{drug['searchTerm']} {drug['concent']} [{drug['nombreFormaFarmaceutica']}]"
-
-
-
-        # Sorting the list with a custom key that handles numerical sorting for `concent`
-        unique_drugs = sorted(unique_drugs, key=lambda x: (
-            x['searchTerm'],
-            x['nombreFormaFarmaceutica'],
-            get_numerical_concent(x['concent'])
-        ))
-
-        unique_drugs_names = [doc['formOption'] for doc in unique_drugs]
-
-        unique_distritos = mongo_consult(consult_unique_distritos)
-        unique_distritos_names = sorted([doc['descripcion'] for doc in unique_distritos])
-        
-        st.session_state.unique_drugs_names = unique_drugs_names
-        st.session_state.unique_distritos_names = unique_distritos_names
-        st.session_state.unique_drugs = unique_drugs
-        
-    
-    intro_message = "¡Hola! Soy tu asistente virtual de búsqueda de medicinas en Lima. Estoy aquí para ayudarte a encontrar las medicinas que necesitas. ¿En qué puedo ayudarte hoy?"
-    
-    with st.chat_message("assistant", avatar="🧑‍⚕️"):
-        st.write_stream(stream_data(intro_message))
-        
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": intro_message})
-    st.session_state.greetings_shown = True
-    
-if not st.session_state.form_submitted:
-    
-    consult_form = st.empty()
-    
-    with consult_form.form(key='consult_form'):
-        selector_drugs = st.selectbox('Medicina', st.session_state.unique_drugs_names, index=None, placeholder="Selecciona la medicina...")
-        selector_distritos = st.selectbox('Distrito', st.session_state.unique_distritos_names, index=None, placeholder="Selecciona el distrito...")
-        submit = st.form_submit_button('Consultar', on_click=disable, disabled=st.session_state.disabled)
-        
-    if submit:
-        matching_item = [drug for drug in st.session_state.unique_drugs if drug['formOption'] == selector_drugs]
-        
-        requested_search = {
-            "selected_drug": matching_item[0]['searchTerm'],
-            "concent": matching_item[0]['concent'],
-            "nombreFormaFarmaceutica": matching_item[0]['nombreFormaFarmaceutica'],
-            "selected_distrito": selector_distritos
-        }
-        
-        st.session_state.requested_search = requested_search
-        
-        consult_form = st.empty()
-        
-        # with st.chat_message("user"):
-        #     form_request = f"Quiero buscar información sobre {requested_search['selected_drug']} en el distrito {requested_search['selected_distrito']}"
-        #     st.write_stream(stream_data(form_request))
-        
-        # st.session_state.form_submitted = True
-        # st.session_state.messages.append({"role": "user", "content": form_request})
-        
-        
-        
-
 if 'db_consulted' not in st.session_state:
     st.session_state['db_consulted'] = False
-    
+
 if 'concentrations_loaded' not in st.session_state:
-    st.session_state['concentrations_loaded'] = False  
-    
+    st.session_state['concentrations_loaded'] = False
+
+# Main Logic
+display_chat_messages()
+
+if not st.session_state.greetings_shown:
+    fetch_unique_drugs_and_districts()
+
+if not st.session_state.form_submitted:
+    handle_form_submission()
 
 if not st.session_state.db_consulted and 'requested_search' in st.session_state:
-    
-    with st.chat_message("assistant", avatar="🧑‍⚕️"):
-        st.write_stream(stream_data("Déjame buscar la información que necesitas..."))
-        st.session_state.messages.append({"role": "assistant", "content": "Déjame buscar la información que necesitas..."})
-        
-    with st.spinner('Buscando medicinas..'):
-
-        #Query MongoDb
-        find_filtered_drug_body = {
-            "db": "health",
-            "collection": "drugs",
-            # "query": 
-            #     "searchTerm": st.session_state.requested_search['selected_drug'],
-            #     "producto.concent": st.session_state.requested_search['concent'],
-            #     "producto.nombreFormaFarmaceutica": st.session_state.requested_search['nombreFormaFarmaceutica'],
-            #     "comercio.locacion.distrito": st.session_state.requested_search['selected_distrito']
-            # 
-            "aggregation": [
-            {
-                '$match': {
-                    # 'searchTerm': 'AMITRIPTILINA CLORHIDRATO', 
-                    # 'producto.concent': '25 mg', 
-                    # 'producto.nombreFormaFarmaceutica': 'Tableta Recubierta', 
-                    # 'comercio.locacion.distrito': 'MIRAFLORES'
-                    "searchTerm": st.session_state.requested_search['selected_drug'],
-                    "producto.concent": st.session_state.requested_search['concent'],
-                    "producto.nombreFormaFarmaceutica": st.session_state.requested_search['nombreFormaFarmaceutica'],
-                    "comercio.locacion.distrito": st.session_state.requested_search['selected_distrito']
-                }
-            }, {
-                '$sort': {
-                    'producto.precios.precio2': 1
-                }
-            }, {
-                '$limit': 3
-            }, {
-                '$lookup': {
-                    'from': 'pharmacies', 
-                    'localField': 'comercio.pharmacyId', 
-                    'foreignField': '_id', 
-                    'as': 'pharmacyInfo'
-                }
-            }, {
-                '$project': {
-                    '_id': 1, 
-                    'nombreProducto': '$producto.nombreProducto', 
-                    'concent': '$producto.concent', 
-                    'nombreFormaFarmaceutica': '$producto.nombreFormaFarmaceutica', 
-                    'precio2': '$producto.precios.precio2', 
-                    'nombreComercial': {
-                        '$arrayElemAt': [
-                            '$pharmacyInfo.nombreComercial', 0
-                        ]
-                    }, 
-                    'direccion': {
-                        '$arrayElemAt': [
-                            '$pharmacyInfo.locacion.direccion', 0
-                        ]
-                    }, 
-                    'googleMaps_search_url': {
-                        '$arrayElemAt': [
-                            '$pharmacyInfo.google_maps.googleMaps_search_url', 0
-                        ]
-                    }, 
-                    'googleMapsUri': {
-                        '$arrayElemAt': [
-                            '$pharmacyInfo.google_maps.googleMapsUri', 0
-                        ]
-                    }
-                }
-            }
-        ]
-        }   
-
-        filtered_drugs = mongo_consult(find_filtered_drug_body)
-        
-        # time.sleep(2)
-    
-    if len(filtered_drugs) > 0:
-        
-        #Retrieve drugs
-        with st.chat_message("assistant", avatar="🧑‍⚕️"):
-            total_results_message = f"""
-            Hay {len(filtered_drugs)} resultados en total \n
-            Dejame mostrarte las opciones más económicas:
-            """
-            st.write_stream(stream_data(total_results_message))
-            st.session_state.messages.append({"role": "assistant", "content": total_results_message})
-            
-
-        #Store retrieved drugs
-        st.session_state.search_results = filtered_drugs
-        
-        # sorted_filtered_drugs = sorted(
-        # filtered_drugs,
-        # key=lambda d: float(d.get('producto', {}).get('precios', {}).get('precio2', float('inf'))),
-        # # Using float('inf') as a default value to handle missing keys or values
-        # )
-        
-        # top_3_filtered_drugs = sorted_filtered_drugs[:3]
-        
-        st.session_state['top3'] = filtered_drugs #top_3_filtered_drugs
-        
-            
-        for drug in filtered_drugs: #top_3_filtered_drugs:
-            # drug_name = drug['producto']['nombreProducto']
-            # drug_concent = drug['producto']['concent']
-            # drug_forma = drug['producto']['nombreFormaFarmaceutica']
-            # drug_price = drug['producto']['precios']['precio2']
-            
-            # drug_comercio = drug['comercio']['nombreComercial']
-            # drug_ubicacion = drug['comercio']['locacion']['direccion']
-            
-            drug_name = drug.get('nombreProducto')
-            drug_concent = drug.get('concent')
-            drug_forma = drug.get('nombreFormaFarmaceutica')
-            drug_price = drug.get('precio2')
-            
-            drug_comercio = drug.get('nombreComercial')
-            drug_ubicacion = drug.get('direccion')
-            google_maps_url_search = drug.get('googleMaps_search_url')
-            google_maps_url = drug.get('googleMapsUri')
-            
-            with st.chat_message("assistant", avatar="🧑‍⚕️"):
-                
-                if google_maps_url:
-                    url_mkdown = f"[{drug_comercio}: {drug_ubicacion}]({google_maps_url})"
-                else:
-                    url_mkdown = f"[{drug_comercio}: {drug_ubicacion}]({google_maps_url_search})"
-
-                drug_message = f"""
-                🔍 {drug_name} {drug_concent} [{drug_forma}] - Precio: S/. {drug_price} \n
-                📍 {url_mkdown} \n
-                """
-
-                st.write_stream(stream_data(drug_message))
-                #st.markdown(f"{url_mkdown}")
-                st.session_state.messages.append({"role": "assistant", "content": drug_message})
-        
-        st.session_state.db_consulted = True
-    
-    else:
-        with st.chat_message("assistant", avatar="🧑‍⚕️"):
-            total_results_message = f"""
-            No se encontraron resultados para {st.session_state.requested_search['selected_drug']} en el distrito {st.session_state.requested_search['selected_distrito']}
-            """
-            st.write_stream(stream_data(total_results_message))
-            st.session_state.messages.append({"role": "assistant", "content": total_results_message})
-    
-    time.sleep(2)
-    
-    with st.chat_message("assistant", avatar="🧑‍⚕️"):
-        restart_message = f"""Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️"""
-        
-        st.write_stream(stream_data(restart_message))
-        
-        st.page_link( domain , label="Realizar otra consulta", icon="💊")
+    handle_db_consultation()

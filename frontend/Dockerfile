@@ -18,3 +18,5 @@ EXPOSE 8501
 
 # Command to run the Streamlit app
 CMD ["streamlit", "run", "app/main.py"]
+
+LABEL org.opencontainers.image.source https://github.com/mrcord/howtofinddrugsonline
