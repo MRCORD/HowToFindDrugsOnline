@@ -33,8 +33,8 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           labels: |
-            org.opencontainers.image.source=https://github.com/OWNER/REPO
-          tags: ghcr.io/${{ github.repository }}/frontend:latest
+            org.opencontainers.image.source=https://github.com/owner/repo
+          tags: ghcr.io/owner/repo/frontend:latest
 
       - name: Build and push backend image
         uses: docker/build-push-action@v2
@@ -43,5 +43,5 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           labels: |
-            org.opencontainers.image.source=https://github.com/OWNER/REPO
-          tags: ghcr.io/${{ github.repository }}/backend:latest
+            org.opencontainers.image.source=https://github.com/owner/repo
+          tags: ghcr.io/owner/repo/backend:latest
