@@ -8,7 +8,8 @@ load_dotenv()
 # backend_url = os.environ.get("BACKEND_URL")
 # backend_url = os.environ.get("BACKEND_URL")
 
-backend_url = "http://localhost:8000"
+#backend_url = "http://localhost:8000"
+backend_url = os.environ.get("BACKEND_URL")
 domain = os.environ.get("DOMAIN")
 posthog_key = os.environ.get("POSTHOG_API_KEY")
 
