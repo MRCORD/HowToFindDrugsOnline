@@ -7,7 +7,7 @@ export const StyledContainer = styled(Container)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   minHeight: '100vh',
-  padding: theme.spacing(2),
+  padding: theme.spacing(4),
 }));
 
 export const ContentWrapper = styled('div')({
@@ -23,23 +23,28 @@ export const Title = styled(Typography)(({ theme }) => ({
   fontWeight: 'bold',
   marginBottom: theme.spacing(2),
   textAlign: 'center',
+  color: theme.palette.text.primary,
 }));
 
 export const Subtitle = styled(Typography)(({ theme }) => ({
-  fontSize: '0.9rem',
+  fontSize: '1rem',
   marginBottom: theme.spacing(4),
   maxWidth: '600px',
   textAlign: 'center',
+  color: theme.palette.text.secondary,
 }));
 
 export const StyledDivider = styled(Divider)(({ theme }) => ({
   width: '100%',
-  margin: theme.spacing(2, 0), // Reduced from 4 to 2
-  border: `1px solid ${theme.palette.background.default}`,
+  margin: theme.spacing(1, 0),
+  backgroundColor: theme.palette.background.default,
+  border: theme.palette.background.default,
 }));
 
-export const ResponseWrapper = styled('div')(({ theme }) => ({
-  width: '100%',
-  maxWidth: '600px',
-  marginTop: theme.spacing(2), // Reduced from 4 to 2
+export const FadeWrapper = styled('div')(({ theme }) => ({
+  opacity: 0,
+  transition: `opacity ${theme.transitions.duration.standard}ms ${theme.transitions.easing.easeInOut}`,
+  '&.visible': {
+    opacity: 1,
+  },
 }));

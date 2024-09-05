@@ -8,19 +8,11 @@ import {
   ContentWrapper, 
   Title, 
   Subtitle, 
-  StyledDivider
+  StyledDivider,
+  FadeWrapper
 } from './HomePage.styles';
 import { animationConfig } from '../../config/animationConfig';
 import { searchDrugs } from '../../services/searchService';
-import { styled } from '@mui/material/styles';
-
-const FadeWrapper = styled('div')(({ theme }) => ({
-  opacity: 0,
-  transition: `opacity ${animationConfig.fadeInDuration}s ease-in-out`,
-  '&.visible': {
-    opacity: 1,
-  },
-}));
 
 const HomePage = () => {
   const [state, setState] = useState({
@@ -28,7 +20,8 @@ const HomePage = () => {
     isFormDisabled: false,
     isLoading: false,
     isVisible: false,
-    showContent: true
+    showContent: true,
+    resetForm: false
   });
 
   const updateState = (newState) => {
@@ -41,7 +34,7 @@ const HomePage = () => {
   }, []);
 
   const handleSearch = async (drug, district) => {
-    updateState({ isFormDisabled: true, isLoading: true, searchResults: null });
+    updateState({ isFormDisabled: true, isLoading: true, searchResults: null, resetForm: false });
     try {
       const results = await searchDrugs(drug, district);
       updateState({ searchResults: results, isLoading: false });
@@ -61,7 +54,8 @@ const HomePage = () => {
         searchResults: null,
         isFormDisabled: false,
         isLoading: false,
-        showContent: false
+        showContent: false,
+        resetForm: true
       });
 
       // Trigger fade-in after a brief delay
@@ -69,7 +63,7 @@ const HomePage = () => {
     }, animationConfig.fadeInDuration * 1000);
   };
 
-  const { searchResults, isFormDisabled, isLoading, isVisible, showContent } = state;
+  const { searchResults, isFormDisabled, isLoading, isVisible, showContent, resetForm } = state;
 
   return (
     <StyledContainer maxWidth="md">
@@ -81,7 +75,7 @@ const HomePage = () => {
           <Subtitle variant="body1">
             ¡Hola! Soy tu asistente virtual de búsqueda de medicinas en Lima. Estoy aquí para ayudarte a encontrar las medicinas que necesitas. ¿En qué puedo ayudarte hoy?
           </Subtitle>
-          <SearchForm onSearch={handleSearch} disabled={isFormDisabled} />
+          <SearchForm onSearch={handleSearch} disabled={isFormDisabled} reset={resetForm} />
           {showContent && (isLoading || searchResults) && (
             <>
               <StyledDivider />

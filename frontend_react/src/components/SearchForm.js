@@ -1,9 +1,24 @@
-import React, { useState } from 'react';
-import { FormWrapper, StyledButton, StyledPaper, StyledTextField } from './SearchForm.styles';
+// src/components/SearchForm/SearchForm.js
 
-const SearchForm = ({ onSearch, disabled }) => {
+import React, { useState, useEffect } from 'react';
+// import { Typography } from '@mui/material';
+import {
+  FormWrapper,
+  StyledPaper,
+  StyledTextField,
+  StyledButton
+} from './SearchForm.styles';
+
+const SearchForm = ({ onSearch, disabled, reset }) => {
   const [selectedDrug, setSelectedDrug] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
+
+  useEffect(() => {
+    if (reset) {
+      setSelectedDrug('');
+      setSelectedDistrict('');
+    }
+  }, [reset]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

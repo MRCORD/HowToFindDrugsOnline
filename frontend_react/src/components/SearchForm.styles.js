@@ -9,8 +9,8 @@ export const FormWrapper = styled('div')({
 
 export const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  backgroundColor: '#1e2130',
-  borderRadius: theme.spacing(1),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
   width: '100%',
   maxWidth: '600px',
 }));
@@ -19,30 +19,31 @@ export const StyledTextField = styled(TextField)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
-      borderColor: '#4a5568',
+      borderColor: theme.palette.divider,
     },
     '&:hover fieldset': {
-      borderColor: '#718096',
+      borderColor: theme.palette.primary.main,
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#90caf9',
+      borderColor: theme.palette.primary.main,
     },
   },
   '& .MuiInputLabel-root': {
-    color: '#a0aec0',
+    color: theme.palette.text.secondary,
     '&.Mui-focused': {
-      color: '#90caf9',
+      color: theme.palette.primary.main,
     },
   },
   '& .MuiSelect-icon': {
-    color: '#a0aec0',
+    color: theme.palette.text.secondary,
   },
 }));
 
 export const StyledButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(2),
-  backgroundColor: '#4a5568',
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
   '&:hover': {
-    backgroundColor: '#718096',
+    backgroundColor: theme.palette.primary.dark,
   },
 }));

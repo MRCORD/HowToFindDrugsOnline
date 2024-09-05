@@ -1,35 +1,21 @@
 // src/components/ChatResponse.js
-
 import React, { useState, useEffect } from 'react';
-import { Typography, Box, ListItemIcon, Link, Fade, Paper, Button } from '@mui/material';
-import { LocalPharmacy, LocationOn } from '@mui/icons-material';
-import { MessageBubble, StyledAvatar, LoadingBubble, StyledCircularProgress, ResponseWrapper } from '../styles/globalStyles';
-import { animationConfig } from '../config/animationConfig';
-import { styled } from '@mui/material/styles';
+import { Typography, Box, Link, Fade, useTheme } from '@mui/material';
+import { LocationOn } from '@mui/icons-material';
 import { TypeAnimation } from 'react-type-animation';
-
-const ResultItem = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(1.5),
-  marginTop: theme.spacing(2),
-  backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.spacing(2),
-  transition: 'transform 0.2s, box-shadow 0.2s',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[4],
-  },
-}));
-
-const RestartButton = styled(Button)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  '&:hover': {
-    backgroundColor: theme.palette.primary.dark,
-  },
-}));
+import { animationConfig } from '../config/animationConfig';
+import {
+  MessageBubble,
+  StyledAvatar,
+  LoadingBubble,
+  StyledCircularProgress,
+  ResponseWrapper,
+  ResultItem,
+  RestartButton
+} from './ChatResponse.styles';
 
 const ChatResponse = ({ results, isLoading, onRestart }) => {
+  const theme = useTheme();
   const [showLoadingMessage, setShowLoadingMessage] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [typewriterComplete, setTypewriterComplete] = useState(false);
@@ -74,12 +60,10 @@ const ChatResponse = ({ results, isLoading, onRestart }) => {
     }
   }, [visibleResults, results]);
 
+
+
   const introText = `Hay ${results.length} resultados en total.\nAquí están las opciones más económicas:`;
   const restartText = "Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️";
-
-  const handleRestart = () => {
-    onRestart();
-  };
 
   return (
     <ResponseWrapper>
@@ -106,40 +90,33 @@ const ChatResponse = ({ results, isLoading, onRestart }) => {
                   wrapper="div"
                   cursor={true}
                   speed={animationConfig.typewriterSpeed}
-                  style={{ whiteSpace: 'pre-line', marginBottom: '16px' }}
+                  style={{ whiteSpace: 'pre-line', marginBottom: '16px', color: theme.palette.text.primary }}
                 />
                 {visibleResults.map((result, index) => (
                   <Fade key={index} in={true} timeout={500}>
                     <ResultItem elevation={1}>
-                      <Box display="flex" alignItems="flex-start">
-                        <ListItemIcon style={{ minWidth: 'auto', marginRight: '8px', marginTop: '4px' }}>
-                          <LocalPharmacy color="primary" fontSize="small" />
-                        </ListItemIcon>
-                        <Box flexGrow={1}>
-                          <Typography variant="body2" component="div">
-                            <strong>{result.nombreProducto}</strong>
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            Precio: S/. {result.precio.toFixed(2)}
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            {result.farmacia}
-                          </Typography>
-                          <Link
-                            href="#"
-                            color="secondary"
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              mt: 0.5,
-                              fontSize: '0.875rem'
-                            }}
-                          >
-                            <LocationOn sx={{ mr: 0.5 }} fontSize="small" />
-                            {result.direccion}
-                          </Link>
-                        </Box>
-                      </Box>
+                      <Typography variant="body1" component="div" gutterBottom>
+                        <strong>{result.nombreProducto}</strong>
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Precio: S/. {result.precio.toFixed(2)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {result.farmacia}
+                      </Typography>
+                      <Link
+                        href="#"
+                        color="secondary"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          mt: 1,
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        <LocationOn sx={{ mr: 0.5 }} fontSize="small" />
+                        {result.direccion}
+                      </Link>
                     </ResultItem>
                   </Fade>
                 ))}
@@ -173,7 +150,7 @@ const ChatResponse = ({ results, isLoading, onRestart }) => {
                     <RestartButton
                       variant="contained"
                       fullWidth
-                      onClick={handleRestart}
+                      onClick={onRestart}
                       startIcon={<span role="img" aria-label="pill">💊</span>}
                       style={{ marginTop: `${animationConfig.restartButtonDelay}s` }}
                     >

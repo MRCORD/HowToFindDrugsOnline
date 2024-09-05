@@ -6,6 +6,6 @@ export const animationConfig = {
   typewriterSpeed: 70, // Characters per second
   resultItemDelay: 1, // in seconds
   showRestartMessageDelay: 2, // in seconds
-  restartAnimationDuration: 2, // in seconds
+  restartAnimationDuration: 1, // in seconds
   restartButtonDelay: 2, // in seconds (new addition)
 };
