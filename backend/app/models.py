@@ -40,3 +40,9 @@ class UpdateRequest(BaseModel):
     collection: str = Field("drugs", title="Collection name")
     query: dict = Field({}, title="Query parameters")
     document: GenericDocument = Field(None, title="Document to update")
+    
+class FilteredDrugRequest(BaseModel):
+        selected_drug: str = Field(..., example="IBUPROFENO")
+        concent: str = Field(..., example="400 mg")
+        nombreFormaFarmaceutica: str = Field(..., example="Tableta")
+        selected_distrito: str = Field(..., example="MIRAFLORES")

@@ -60,3 +60,103 @@ def consult_mongo(request: MongoQuery):
         logger.error(f"Error retrieving MongoDB query: {str(e)}")
         raise HTTPException(status_code=500, detail="Error retrieving MongoDB query")
 
+@router.get("/v1/unique_drugs", tags=["queries", "Production"])
+def get_unique_drugs():
+    try:
+        consult_body = {
+            "db": "health",
+            "collection": "drugs",
+            "aggregation": [
+                {"$group": {
+                    "_id": {
+                        "searchTerm": "$searchTerm",
+                        "concent": "$producto.concent",
+                        "nombreFormaFarmaceutica": "$producto.nombreFormaFarmaceutica"
+                    }}},
+                {"$sort": {
+                    "_id.searchTerm": 1,
+                    "_id.concent": 1,
+                    "_id.nombreFormaFarmaceutica": 1
+                }},
+                {"$project": {
+                    "_id": 0,
+                    "searchTerm": "$_id.searchTerm",
+                    "concent": "$_id.concent",
+                    "nombreFormaFarmaceutica": "$_id.nombreFormaFarmaceutica"
+                }}
+            ]
+        }
+        documents = consult_mongo_data(MongoQuery(**consult_body))
+        if documents is None:
+            raise HTTPException(status_code=500, detail="Error retrieving unique drugs")
+        return {"drugs": documents}
+    except Exception as e:
+        logger.error(f"Error retrieving unique drugs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving unique drugs")
+    
+
+@router.get("/v1/unique_districts", tags=["queries", "Production"])
+def get_unique_districts():
+    try:
+        consult_body = {
+            "db": "peru",
+            "collection": "districts",
+            "aggregation": [
+                {"$project": {"_id": 0, "descripcion": 1}},
+                {"$sort": {"descripcion": 1}}
+            ]
+        }
+        documents = consult_mongo_data(MongoQuery(**consult_body))
+        if documents is None:
+            raise HTTPException(status_code=500, detail="Error retrieving unique districts")
+        return {"districts": documents}
+    except Exception as e:
+        logger.error(f"Error retrieving unique districts: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving unique districts")
+
+
+
+@router.post("/v1/filtered_drugs", tags=["queries", "Production"])
+def get_filtered_drugs(request: FilteredDrugRequest):
+    try:
+        consult_body = {
+            "db": "health",
+            "collection": "drugs",
+            "aggregation": [
+                {
+                    '$match': {
+                        "searchTerm": request.selected_drug,
+                        "producto.concent": request.concent,
+                        "producto.nombreFormaFarmaceutica": request.nombreFormaFarmaceutica,
+                        "comercio.locacion.distrito": request.selected_distrito
+                    }
+                },
+                {'$sort': {'producto.precios.precio2': 1}},
+                {'$limit': 3},
+                {'$lookup': {
+                    'from': 'pharmacies',
+                    'localField': 'comercio.pharmacyId',
+                    'foreignField': '_id',
+                    'as': 'pharmacyInfo'
+                }},
+                {'$project': {
+                    '_id': 1,
+                    'nombreProducto': '$producto.nombreProducto',
+                    'concent': '$producto.concent',
+                    'nombreFormaFarmaceutica': '$producto.nombreFormaFarmaceutica',
+                    'precio2': '$producto.precios.precio2',
+                    'nombreComercial': {'$arrayElemAt': ['$pharmacyInfo.nombreComercial', 0]},
+                    'direccion': {'$arrayElemAt': ['$pharmacyInfo.locacion.direccion', 0]},
+                    'googleMaps_search_url': {'$arrayElemAt': ['$pharmacyInfo.google_maps.googleMaps_search_url', 0]},
+                    'googleMapsUri': {'$arrayElemAt': ['$pharmacyInfo.google_maps.googleMapsUri', 0]}
+                }}
+            ]
+        }
+        documents = consult_mongo_data(MongoQuery(**consult_body))
+        if documents is None:
+            raise HTTPException(status_code=500, detail="Error retrieving filtered drugs")
+        
+        return {"drugs": documents}
+    except Exception as e:
+        logger.error(f"Error retrieving filtered drugs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving filtered drugs")
