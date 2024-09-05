@@ -1,18 +1,16 @@
-// src/pages/HomePage/HomePage.js
-
-import React, { useState, useEffect } from 'react';
-import SearchForm from '../../components/SearchForm';
+import React, { useEffect, useState } from 'react';
 import ChatResponse from '../../components/ChatResponse';
-import { 
-  StyledContainer, 
-  ContentWrapper, 
-  Title, 
-  Subtitle, 
-  StyledDivider,
-  FadeWrapper
-} from './HomePage.styles';
+import SearchForm from '../../components/SearchForm';
 import { animationConfig } from '../../config/animationConfig';
-import { searchDrugs } from '../../services/searchService';
+import { fetchDistrictOptions, fetchMedicineOptions, searchDrugs } from '../../services/api';
+import {
+  ContentWrapper,
+  FadeWrapper,
+  StyledContainer,
+  StyledDivider,
+  Subtitle,
+  Title
+} from './HomePage.styles';
 
 const HomePage = () => {
   const [state, setState] = useState({
@@ -21,7 +19,9 @@ const HomePage = () => {
     isLoading: false,
     isVisible: false,
     showContent: true,
-    resetForm: false
+    resetForm: false,
+    medicineOptions: null,
+    districtOptions: null,
   });
 
   const updateState = (newState) => {
@@ -29,15 +29,30 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    // Trigger initial fade-in
+    const loadOptions = async () => {
+      try {
+        const [medicines, districts] = await Promise.all([
+          fetchMedicineOptions(),
+          fetchDistrictOptions()
+        ]);
+        updateState({ 
+          medicineOptions: medicines.drugs,
+          districtOptions: districts.districts,
+        });
+      } catch (error) {
+        console.error('Error loading options:', error);
+      }
+    };
+
+    loadOptions();
     setTimeout(() => updateState({ isVisible: true }), 100);
   }, []);
 
-  const handleSearch = async (drug, district) => {
+  const handleSearch = async (selectedDrug, selectedDistrict) => {
     updateState({ isFormDisabled: true, isLoading: true, searchResults: null, resetForm: false });
     try {
-      const results = await searchDrugs(drug, district);
-      updateState({ searchResults: results, isLoading: false });
+      const results = await searchDrugs(selectedDrug, selectedDistrict);
+      updateState({ searchResults: results.drugs, isLoading: false });
     } catch (error) {
       console.error('Error searching drugs:', error);
       updateState({ isLoading: false });
@@ -45,10 +60,7 @@ const HomePage = () => {
   };
 
   const handleRestart = () => {
-    // Fade out
     updateState({ isVisible: false });
-
-    // Wait for fade-out, then reset
     setTimeout(() => {
       updateState({
         searchResults: null,
@@ -57,13 +69,11 @@ const HomePage = () => {
         showContent: false,
         resetForm: true
       });
-
-      // Trigger fade-in after a brief delay
       setTimeout(() => updateState({ isVisible: true, showContent: true }), 100);
     }, animationConfig.fadeInDuration * 1000);
   };
 
-  const { searchResults, isFormDisabled, isLoading, isVisible, showContent, resetForm } = state;
+  const { searchResults, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions } = state;
 
   return (
     <StyledContainer maxWidth="md">
@@ -75,7 +85,13 @@ const HomePage = () => {
           <Subtitle variant="body1">
             ¡Hola! Soy tu asistente virtual de búsqueda de medicinas en Lima. Estoy aquí para ayudarte a encontrar las medicinas que necesitas. ¿En qué puedo ayudarte hoy?
           </Subtitle>
-          <SearchForm onSearch={handleSearch} disabled={isFormDisabled} reset={resetForm} />
+          <SearchForm 
+            onSearch={handleSearch} 
+            disabled={isFormDisabled} 
+            reset={resetForm}
+            medicineOptions={medicineOptions}
+            districtOptions={districtOptions}
+          />
           {showContent && (isLoading || searchResults) && (
             <>
               <StyledDivider />

@@ -89,6 +89,11 @@ def get_unique_drugs():
         documents = consult_mongo_data(MongoQuery(**consult_body))
         if documents is None:
             raise HTTPException(status_code=500, detail="Error retrieving unique drugs")
+        
+        # Add the 'dropdown' field to each document
+        for document in documents:
+            document["dropdown"] = medicineOption_concat(document)
+        
         return {"drugs": documents}
     except Exception as e:
         logger.error(f"Error retrieving unique drugs: {str(e)}")

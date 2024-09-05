@@ -1,17 +1,17 @@
 // src/components/ChatResponse.js
-import React, { useState, useEffect } from 'react';
-import { Typography, Box, Link, Fade, useTheme } from '@mui/material';
 import { LocationOn } from '@mui/icons-material';
+import { Box, Fade, Link, Typography, useTheme } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { animationConfig } from '../config/animationConfig';
 import {
-  MessageBubble,
-  StyledAvatar,
   LoadingBubble,
-  StyledCircularProgress,
+  MessageBubble,
   ResponseWrapper,
+  RestartButton,
   ResultItem,
-  RestartButton
+  StyledAvatar,
+  StyledCircularProgress
 } from './ChatResponse.styles';
 
 const ChatResponse = ({ results, isLoading, onRestart }) => {
@@ -60,8 +60,6 @@ const ChatResponse = ({ results, isLoading, onRestart }) => {
     }
   }, [visibleResults, results]);
 
-
-
   const introText = `Hay ${results.length} resultados en total.\nAquí están las opciones más económicas:`;
   const restartText = "Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️";
 
@@ -99,13 +97,15 @@ const ChatResponse = ({ results, isLoading, onRestart }) => {
                         <strong>{result.nombreProducto}</strong>
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Precio: S/. {result.precio.toFixed(2)}
+                        Precio: S/. {result.precio2 ? result.precio2.toFixed(2) : 'N/A'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {result.farmacia}
+                        {result.nombreComercial}
                       </Typography>
                       <Link
-                        href="#"
+                        href={result.googleMapsUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         color="secondary"
                         sx={{
                           display: 'flex',

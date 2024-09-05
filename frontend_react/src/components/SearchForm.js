@@ -1,15 +1,12 @@
-// src/components/SearchForm/SearchForm.js
-
-import React, { useState, useEffect } from 'react';
-// import { Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import {
   FormWrapper,
+  StyledButton,
   StyledPaper,
-  StyledTextField,
-  StyledButton
+  StyledTextField
 } from './SearchForm.styles';
 
-const SearchForm = ({ onSearch, disabled, reset }) => {
+const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOptions }) => {
   const [selectedDrug, setSelectedDrug] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
 
@@ -22,7 +19,8 @@ const SearchForm = ({ onSearch, disabled, reset }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSearch(selectedDrug, selectedDistrict);
+    const drugInfo = medicineOptions.find(drug => drug.dropdown === selectedDrug);
+    onSearch(drugInfo, selectedDistrict);
   };
 
   return (
@@ -34,7 +32,7 @@ const SearchForm = ({ onSearch, disabled, reset }) => {
           label="Medicina"
           value={selectedDrug}
           onChange={(e) => setSelectedDrug(e.target.value)}
-          disabled={disabled}
+          disabled={disabled || !medicineOptions}
           SelectProps={{
             native: true,
           }}
@@ -43,8 +41,9 @@ const SearchForm = ({ onSearch, disabled, reset }) => {
           }}
         >
           <option value="">Selecciona la medicina...</option>
-          <option value="AMLODIPINO 10 mg [Comprimido]">AMLODIPINO 10 mg [Comprimido]</option>
-          <option value="PARACETAMOL 500 mg [Tableta]">PARACETAMOL 500 mg [Tableta]</option>
+          {medicineOptions && medicineOptions.map((drug) => (
+            <option key={drug.dropdown} value={drug.dropdown}>{drug.dropdown}</option>
+          ))}
         </StyledTextField>
         <StyledTextField
           select
@@ -52,7 +51,7 @@ const SearchForm = ({ onSearch, disabled, reset }) => {
           label="Distrito"
           value={selectedDistrict}
           onChange={(e) => setSelectedDistrict(e.target.value)}
-          disabled={disabled}
+          disabled={disabled || !districtOptions}
           SelectProps={{
             native: true,
           }}
@@ -61,8 +60,9 @@ const SearchForm = ({ onSearch, disabled, reset }) => {
           }}
         >
           <option value="">Selecciona el distrito...</option>
-          <option value="BREÑA">BREÑA</option>
-          <option value="MIRAFLORES">MIRAFLORES</option>
+          {districtOptions && districtOptions.map((district) => (
+            <option key={district.descripcion} value={district.descripcion}>{district.descripcion}</option>
+          ))}
         </StyledTextField>
         <StyledButton
           type="submit"

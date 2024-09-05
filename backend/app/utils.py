@@ -160,3 +160,7 @@ def consult_mongo_data(query):
         return None
     finally:
         client.close()
+        
+def medicineOption_concat(medicine_info):
+    medicine_dropdown = f"{medicine_info['searchTerm']} {medicine_info['concent']} [{medicine_info['nombreFormaFarmaceutica']}]"
+    return medicine_dropdown
