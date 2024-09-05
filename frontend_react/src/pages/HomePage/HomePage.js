@@ -1,41 +1,79 @@
-import { Fade } from '@mui/material';
-import React, { useState } from 'react';
-import ChatResponse from '../../components/ChatResponse';
+// src/pages/HomePage/HomePage.js
+
+import React, { useState, useEffect } from 'react';
 import SearchForm from '../../components/SearchForm';
+import ChatResponse from '../../components/ChatResponse';
+import { 
+  StyledContainer, 
+  ContentWrapper, 
+  Title, 
+  Subtitle, 
+  StyledDivider
+} from './HomePage.styles';
 import { animationConfig } from '../../config/animationConfig';
 import { searchDrugs } from '../../services/searchService';
-import {
-  ContentWrapper,
-  StyledContainer,
-  StyledDivider,
-  Subtitle,
-  Title
-} from './HomePage.styles';
+import { styled } from '@mui/material/styles';
+
+const FadeWrapper = styled('div')(({ theme }) => ({
+  opacity: 0,
+  transition: `opacity ${animationConfig.fadeInDuration}s ease-in-out`,
+  '&.visible': {
+    opacity: 1,
+  },
+}));
 
 const HomePage = () => {
-  const [searchResults, setSearchResults] = useState(null);
-  const [isFormDisabled, setIsFormDisabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [state, setState] = useState({
+    searchResults: null,
+    isFormDisabled: false,
+    isLoading: false,
+    isVisible: false,
+    showContent: true
+  });
+
+  const updateState = (newState) => {
+    setState(prevState => ({ ...prevState, ...newState }));
+  };
+
+  useEffect(() => {
+    // Trigger initial fade-in
+    setTimeout(() => updateState({ isVisible: true }), 100);
+  }, []);
 
   const handleSearch = async (drug, district) => {
-    setIsFormDisabled(true);
-    setIsLoading(true);
-    setSearchResults(null);
+    updateState({ isFormDisabled: true, isLoading: true, searchResults: null });
     try {
       const results = await searchDrugs(drug, district);
-      setSearchResults(results);
+      updateState({ searchResults: results, isLoading: false });
     } catch (error) {
       console.error('Error searching drugs:', error);
-      // Here you might want to set an error state and display it to the user
-    } finally {
-      setIsLoading(false);
-      // We're not re-enabling the form here
+      updateState({ isLoading: false });
     }
   };
 
+  const handleRestart = () => {
+    // Fade out
+    updateState({ isVisible: false });
+
+    // Wait for fade-out, then reset
+    setTimeout(() => {
+      updateState({
+        searchResults: null,
+        isFormDisabled: false,
+        isLoading: false,
+        showContent: false
+      });
+
+      // Trigger fade-in after a brief delay
+      setTimeout(() => updateState({ isVisible: true, showContent: true }), 100);
+    }, animationConfig.fadeInDuration * 1000);
+  };
+
+  const { searchResults, isFormDisabled, isLoading, isVisible, showContent } = state;
+
   return (
     <StyledContainer maxWidth="md">
-      <Fade in={true} timeout={animationConfig.fadeInDuration * 1000}>
+      <FadeWrapper className={isVisible ? 'visible' : ''}>
         <ContentWrapper>
           <Title variant="h1">
             Busca tu Pepa 💊
@@ -44,14 +82,18 @@ const HomePage = () => {
             ¡Hola! Soy tu asistente virtual de búsqueda de medicinas en Lima. Estoy aquí para ayudarte a encontrar las medicinas que necesitas. ¿En qué puedo ayudarte hoy?
           </Subtitle>
           <SearchForm onSearch={handleSearch} disabled={isFormDisabled} />
+          {showContent && (isLoading || searchResults) && (
+            <>
+              <StyledDivider />
+              <ChatResponse
+                results={searchResults || []}
+                isLoading={isLoading}
+                onRestart={handleRestart}
+              />
+            </>
+          )}
         </ContentWrapper>
-      </Fade>
-      {(isLoading || searchResults) && (
-        <>
-          <StyledDivider />
-          <ChatResponse results={searchResults || []} isLoading={isLoading} />
-        </>
-      )}
+      </FadeWrapper>
     </StyledContainer>
   );
 };

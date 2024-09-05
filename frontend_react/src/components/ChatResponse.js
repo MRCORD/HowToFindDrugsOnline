@@ -1,5 +1,7 @@
+// src/components/ChatResponse.js
+
 import React, { useState, useEffect } from 'react';
-import { Typography, Box, ListItemIcon, Link, Fade, Paper } from '@mui/material';
+import { Typography, Box, ListItemIcon, Link, Fade, Paper, Button } from '@mui/material';
 import { LocalPharmacy, LocationOn } from '@mui/icons-material';
 import { MessageBubble, StyledAvatar, LoadingBubble, StyledCircularProgress, ResponseWrapper } from '../styles/globalStyles';
 import { animationConfig } from '../config/animationConfig';
@@ -18,11 +20,22 @@ const ResultItem = styled(Paper)(({ theme }) => ({
   },
 }));
 
-const ChatResponse = ({ results, isLoading }) => {
+const RestartButton = styled(Button)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  '&:hover': {
+    backgroundColor: theme.palette.primary.dark,
+  },
+}));
+
+const ChatResponse = ({ results, isLoading, onRestart }) => {
   const [showLoadingMessage, setShowLoadingMessage] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [typewriterComplete, setTypewriterComplete] = useState(false);
   const [visibleResults, setVisibleResults] = useState([]);
+  const [showRestartMessage, setShowRestartMessage] = useState(false);
+  const [restartTypewriterComplete, setRestartTypewriterComplete] = useState(false);
 
   useEffect(() => {
     if (isLoading) {
@@ -30,6 +43,7 @@ const ChatResponse = ({ results, isLoading }) => {
       setShowResults(false);
       setTypewriterComplete(false);
       setVisibleResults([]);
+      setShowRestartMessage(false);
     } else if (results.length > 0) {
       setShowLoadingMessage(false);
       setShowResults(true);
@@ -52,7 +66,20 @@ const ChatResponse = ({ results, isLoading }) => {
     }
   }, [typewriterComplete, results]);
 
+  useEffect(() => {
+    if (visibleResults.length === results.length && results.length > 0) {
+      setTimeout(() => {
+        setShowRestartMessage(true);
+      }, animationConfig.showRestartMessageDelay * 1000);
+    }
+  }, [visibleResults, results]);
+
   const introText = `Hay ${results.length} resultados en total.\nAquí están las opciones más económicas:`;
+  const restartText = "Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️";
+
+  const handleRestart = () => {
+    onRestart();
+  };
 
   return (
     <ResponseWrapper>
@@ -64,7 +91,7 @@ const ChatResponse = ({ results, isLoading }) => {
           </Typography>
         </LoadingBubble>
       </Fade>
-      
+
       {showResults && (
         <Fade in={showResults} timeout={animationConfig.chatBubbleAppear * 1000}>
           <MessageBubble elevation={0}>
@@ -98,12 +125,12 @@ const ChatResponse = ({ results, isLoading }) => {
                           <Typography variant="body2" color="textSecondary">
                             {result.farmacia}
                           </Typography>
-                          <Link 
-                            href="#" 
-                            color="secondary" 
-                            sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
+                          <Link
+                            href="#"
+                            color="secondary"
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
                               mt: 0.5,
                               fontSize: '0.875rem'
                             }}
@@ -116,6 +143,44 @@ const ChatResponse = ({ results, isLoading }) => {
                     </ResultItem>
                   </Fade>
                 ))}
+              </Box>
+            </Box>
+          </MessageBubble>
+        </Fade>
+      )}
+
+      {showRestartMessage && (
+        <Fade in={showRestartMessage} timeout={animationConfig.restartAnimationDuration * 1000}>
+          <MessageBubble elevation={0}>
+            <Box display="flex">
+              <StyledAvatar>🤖</StyledAvatar>
+              <Box flexGrow={1} ml={2}>
+                <TypeAnimation
+                  sequence={[
+                    restartText,
+                    () => setRestartTypewriterComplete(true)
+                  ]}
+                  wrapper="div"
+                  cursor={true}
+                  speed={animationConfig.typewriterSpeed}
+                  style={{ whiteSpace: 'pre-line', marginBottom: '16px' }}
+                />
+                {restartTypewriterComplete && (
+                  <Fade 
+                    in={restartTypewriterComplete} 
+                    timeout={animationConfig.restartAnimationDuration * 1000}
+                  >
+                    <RestartButton
+                      variant="contained"
+                      fullWidth
+                      onClick={handleRestart}
+                      startIcon={<span role="img" aria-label="pill">💊</span>}
+                      style={{ marginTop: `${animationConfig.restartButtonDelay}s` }}
+                    >
+                      Realizar otra consulta
+                    </RestartButton>
+                  </Fade>
+                )}
               </Box>
             </Box>
           </MessageBubble>
