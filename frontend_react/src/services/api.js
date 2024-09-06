@@ -96,7 +96,7 @@ export const searchDrugs = async (selectedDrug, selectedDistrict) => {
     });
 
     console.log('Search drugs response:', response.data);
-    return response.data;
+    return response.data; // This now includes both totalCount and drugs
   } catch (error) {
     console.error('Error searching drugs:', error);
     throw error;

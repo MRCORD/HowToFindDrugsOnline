@@ -153,7 +153,7 @@ def consult_mongo_data(query):
             # Perform find query with query and limit parameters
             cursor = collection.find(query.query).limit(query.limit or 0)
 
-        # Fetch the documents from the cursor and convert ObjectId to string
+        # Convert ObjectId to string for all documents
         documents = [convert_objectid(doc) for doc in cursor]
 
         logger.info(f"MongoDB query length: {len(documents)}")

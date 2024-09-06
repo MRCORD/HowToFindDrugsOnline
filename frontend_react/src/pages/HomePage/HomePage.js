@@ -16,6 +16,7 @@ import {
 const HomePage = () => {
   const [state, setState] = useState({
     searchResults: null,
+    totalCount: 0,
     isFormDisabled: false,
     isLoading: false,
     isVisible: false,
@@ -60,15 +61,16 @@ const HomePage = () => {
   }, []);
 
   const handleSearch = async (selectedDrug, selectedDistrict) => {
-    updateState({ isFormDisabled: true, isLoading: true, searchResults: null, resetForm: false, error: null });
+    updateState({ isFormDisabled: true, isLoading: true, searchResults: null, totalCount: 0, resetForm: false, error: null });
     try {
       const results = await searchDrugs(selectedDrug, selectedDistrict);
-      updateState({ searchResults: results.drugs, isLoading: false });
+      updateState({ searchResults: results.drugs, totalCount: results.totalCount, isLoading: false });
     } catch (error) {
       console.error('Error searching drugs:', error);
       updateState({ 
         isLoading: false, 
         searchResults: [], 
+        totalCount: 0,
         error: error.message || 'Failed to search drugs. Please try again.',
       });
     } finally {
@@ -81,6 +83,7 @@ const HomePage = () => {
     setTimeout(() => {
       updateState({
         searchResults: null,
+        totalCount: 0,
         isFormDisabled: false,
         isLoading: false,
         showContent: false,
@@ -91,7 +94,7 @@ const HomePage = () => {
     }, animationConfig.fadeInDuration * 1000);
   };
 
-  const { searchResults, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions, error } = state;
+  const { searchResults, totalCount, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions, error } = state;
 
   return (
     <StyledContainer maxWidth="md">
@@ -116,6 +119,7 @@ const HomePage = () => {
               <StyledDivider />
               <ChatResponse
                 results={searchResults || []}
+                totalCount={totalCount}
                 isLoading={isLoading}
                 onRestart={handleRestart}
               />

@@ -1,6 +1,3 @@
-// src/components/ChatResponse.js
-import { LocationOn } from '@mui/icons-material';
-import { Box, Fade, Link, Typography, useTheme } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { animationConfig } from '../config/animationConfig';
@@ -13,8 +10,10 @@ import {
   StyledAvatar,
   StyledCircularProgress
 } from './ChatResponse.styles';
+import { Box, Fade, Link, Typography, useTheme } from '@mui/material';
+import { LocationOn } from '@mui/icons-material';
 
-const ChatResponse = ({ results, isLoading, onRestart }) => {
+const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
   const theme = useTheme();
   const [showLoadingMessage, setShowLoadingMessage] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -60,7 +59,7 @@ const ChatResponse = ({ results, isLoading, onRestart }) => {
     }
   }, [visibleResults, results]);
 
-  const introText = `Hay ${results.length} resultados en total.\nAquí están las opciones más económicas:`;
+  const introText = `Hay ${totalCount} resultados en total.\nAquí están las opciones más económicas:`;
   const restartText = "Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️";
 
   return (

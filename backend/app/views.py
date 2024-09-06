@@ -120,22 +120,36 @@ def get_unique_districts():
         raise HTTPException(status_code=500, detail="Error retrieving unique districts")
 
 
-
 @router.post("/v1/filtered_drugs", tags=["queries", "Production"])
 def get_filtered_drugs(request: FilteredDrugRequest):
     try:
-        consult_body = {
-            "db": "health",
-            "collection": "drugs",
-            "aggregation": [
-                {
-                    '$match': {
-                        "searchTerm": request.selected_drug,
-                        "producto.concent": request.concent,
-                        "producto.nombreFormaFarmaceutica": request.nombreFormaFarmaceutica,
-                        "comercio.locacion.distrito": request.selected_distrito
-                    }
-                },
+        match_stage = {
+            '$match': {
+                "searchTerm": request.selected_drug,
+                "producto.concent": request.concent,
+                "producto.nombreFormaFarmaceutica": request.nombreFormaFarmaceutica,
+                "comercio.locacion.distrito": request.selected_distrito
+            }
+        }
+
+        # Get the count
+        count_query = MongoQuery(
+            db="health",
+            collection="drugs",
+            aggregation=[
+                match_stage,
+                {'$count': 'total'}
+            ]
+        )
+        count_result = consult_mongo_data(count_query)
+        total_count = count_result[0]['total'] if count_result else 0
+
+        # Get the top 3 results
+        results_query = MongoQuery(
+            db="health",
+            collection="drugs",
+            aggregation=[
+                match_stage,
                 {'$sort': {'producto.precios.precio2': 1}},
                 {'$limit': 3},
                 {'$lookup': {
@@ -156,12 +170,16 @@ def get_filtered_drugs(request: FilteredDrugRequest):
                     'googleMapsUri': {'$arrayElemAt': ['$pharmacyInfo.google_maps.googleMapsUri', 0]}
                 }}
             ]
-        }
-        documents = consult_mongo_data(MongoQuery(**consult_body))
-        if documents is None:
+        )
+        results = consult_mongo_data(results_query)
+
+        if results is None:
             raise HTTPException(status_code=500, detail="Error retrieving filtered drugs")
-        
-        return {"drugs": documents}
+
+        return {
+            "totalCount": total_count,
+            "drugs": results
+        }
     except Exception as e:
         logger.error(f"Error retrieving filtered drugs: {str(e)}")
         raise HTTPException(status_code=500, detail="Error retrieving filtered drugs")
