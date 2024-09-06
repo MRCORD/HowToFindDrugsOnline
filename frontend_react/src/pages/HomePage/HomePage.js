@@ -9,7 +9,8 @@ import {
   StyledContainer,
   StyledDivider,
   Subtitle,
-  Title
+  Title,
+  ErrorMessage
 } from './HomePage.styles';
 
 const HomePage = () => {
@@ -22,6 +23,7 @@ const HomePage = () => {
     resetForm: false,
     medicineOptions: null,
     districtOptions: null,
+    error: null,
   });
 
   const updateState = (newState) => {
@@ -30,17 +32,26 @@ const HomePage = () => {
 
   useEffect(() => {
     const loadOptions = async () => {
+      console.log('Loading options...');
       try {
         const [medicines, districts] = await Promise.all([
           fetchMedicineOptions(),
           fetchDistrictOptions()
         ]);
+        console.log('Medicines:', medicines);
+        console.log('Districts:', districts);
         updateState({ 
           medicineOptions: medicines.drugs,
           districtOptions: districts.districts,
         });
+        console.log('State updated with options');
       } catch (error) {
         console.error('Error loading options:', error);
+        updateState({ 
+          medicineOptions: [],
+          districtOptions: [],
+          error: 'Failed to load options. Please try again later.',
+        });
       }
     };
 
@@ -49,13 +60,19 @@ const HomePage = () => {
   }, []);
 
   const handleSearch = async (selectedDrug, selectedDistrict) => {
-    updateState({ isFormDisabled: true, isLoading: true, searchResults: null, resetForm: false });
+    updateState({ isFormDisabled: true, isLoading: true, searchResults: null, resetForm: false, error: null });
     try {
       const results = await searchDrugs(selectedDrug, selectedDistrict);
       updateState({ searchResults: results.drugs, isLoading: false });
     } catch (error) {
       console.error('Error searching drugs:', error);
-      updateState({ isLoading: false });
+      updateState({ 
+        isLoading: false, 
+        searchResults: [], 
+        error: error.message || 'Failed to search drugs. Please try again.',
+      });
+    } finally {
+      updateState({ isFormDisabled: false });
     }
   };
 
@@ -67,13 +84,14 @@ const HomePage = () => {
         isFormDisabled: false,
         isLoading: false,
         showContent: false,
-        resetForm: true
+        resetForm: true,
+        error: null,
       });
       setTimeout(() => updateState({ isVisible: true, showContent: true }), 100);
     }, animationConfig.fadeInDuration * 1000);
   };
 
-  const { searchResults, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions } = state;
+  const { searchResults, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions, error } = state;
 
   return (
     <StyledContainer maxWidth="md">
@@ -85,6 +103,7 @@ const HomePage = () => {
           <Subtitle variant="body1">
             ¡Hola! Soy tu asistente virtual de búsqueda de medicinas en Lima. Estoy aquí para ayudarte a encontrar las medicinas que necesitas. ¿En qué puedo ayudarte hoy?
           </Subtitle>
+          {error && <ErrorMessage>{error}</ErrorMessage>}
           <SearchForm 
             onSearch={handleSearch} 
             disabled={isFormDisabled} 

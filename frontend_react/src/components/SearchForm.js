@@ -17,10 +17,14 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
     }
   }, [reset]);
 
+  useEffect(() => {
+    console.log('Medicine options in SearchForm:', medicineOptions);
+    console.log('District options in SearchForm:', districtOptions);
+  }, [medicineOptions, districtOptions]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const drugInfo = medicineOptions.find(drug => drug.dropdown === selectedDrug);
-    onSearch(drugInfo, selectedDistrict);
+    onSearch(selectedDrug, selectedDistrict);
   };
 
   return (

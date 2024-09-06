@@ -134,7 +134,10 @@ def consult_mongo_data(query):
             logger.error("MongoDB connection string not found in environment variables")
             return None
 
-        client = MongoClient(connection_string)
+        client = MongoClient(connection_string,
+                             socketTimeoutMS=60000,
+                             connectTimeoutMS=60000,
+                             )
         db = client[query.db]
         collection = db[query.collection]
         logger.info("MongoDB connection was successful")

@@ -1,5 +1,5 @@
+import { Container, Divider, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Container, Typography, Divider } from '@mui/material';
 
 export const StyledContainer = styled(Container)(({ theme }) => ({
   display: 'flex',
@@ -47,4 +47,9 @@ export const FadeWrapper = styled('div')(({ theme }) => ({
   '&.visible': {
     opacity: 1,
   },
+}));
+
+export const ErrorMessage = styled('div')(({ theme }) => ({
+  color: theme.palette.error.main,
+  marginBottom: theme.spacing(2),
 }));
