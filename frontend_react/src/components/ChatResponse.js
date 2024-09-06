@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { animationConfig } from '../config/animationConfig';
+import { useAnalytics } from '../hooks/useAnalytics';
 import {
   LoadingBubble,
   MessageBubble,
@@ -15,6 +16,7 @@ import { LocationOn } from '@mui/icons-material';
 
 const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
   const theme = useTheme();
+  const { trackEvent } = useAnalytics();
   const [showLoadingMessage, setShowLoadingMessage] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [typewriterComplete, setTypewriterComplete] = useState(false);
@@ -32,8 +34,9 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
     } else if (results.length > 0) {
       setShowLoadingMessage(false);
       setShowResults(true);
+      trackEvent('Results', 'Display Results', 'Search Results Shown', results.length);
     }
-  }, [isLoading, results]);
+  }, [isLoading, results, trackEvent]);
 
   useEffect(() => {
     if (typewriterComplete && results.length > 0) {
@@ -58,6 +61,15 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
       }, animationConfig.showRestartMessageDelay * 1000);
     }
   }, [visibleResults, results]);
+
+  const handleRestartClick = () => {
+    trackEvent('User Action', 'Restart Search', 'User clicked restart button');
+    onRestart();
+  };
+
+  const handleLocationClick = (location) => {
+    trackEvent('User Action', 'View Location', location);
+  };
 
   const introText = `Hay ${totalCount} resultados en total.\nAquí están las opciones más económicas:`;
   const restartText = "Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️";
@@ -113,6 +125,7 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
                           mt: 1,
                           fontSize: '0.875rem'
                         }}
+                        onClick={() => handleLocationClick(result.direccion)}
                       >
                         <LocationOn sx={{ mr: 0.5 }} fontSize="small" />
                         {result.direccion}
@@ -151,7 +164,7 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
                     <RestartButton
                       variant="contained"
                       fullWidth
-                      onClick={onRestart}
+                      onClick={handleRestartClick}
                       startIcon={<span role="img" aria-label="pill">💊</span>}
                       style={{ marginTop: `${animationConfig.restartButtonDelay}s` }}
                     >

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAnalytics } from '../hooks/useAnalytics';
 import {
   FormWrapper,
   StyledButton,
@@ -7,6 +8,7 @@ import {
 } from './SearchForm.styles';
 
 const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOptions }) => {
+  const { trackEvent, trackFormInteraction } = useAnalytics();
   const [selectedDrug, setSelectedDrug] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
 
@@ -25,6 +27,23 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
   const handleSubmit = (e) => {
     e.preventDefault();
     onSearch(selectedDrug, selectedDistrict);
+    trackEvent('Form Submission', 'Search Form', `${selectedDrug} in ${selectedDistrict}`);
+  };
+
+  const handleDrugChange = (e) => {
+    const newDrug = e.target.value;
+    setSelectedDrug(newDrug);
+    if (newDrug) {
+      trackFormInteraction('Select Drug', newDrug);
+    }
+  };
+
+  const handleDistrictChange = (e) => {
+    const newDistrict = e.target.value;
+    setSelectedDistrict(newDistrict);
+    if (newDistrict) {
+      trackFormInteraction('Select District', newDistrict);
+    }
   };
 
   return (
@@ -35,7 +54,7 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
           fullWidth
           label="Medicina"
           value={selectedDrug}
-          onChange={(e) => setSelectedDrug(e.target.value)}
+          onChange={handleDrugChange}
           disabled={disabled || !medicineOptions}
           SelectProps={{
             native: true,
@@ -54,7 +73,7 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
           fullWidth
           label="Distrito"
           value={selectedDistrict}
-          onChange={(e) => setSelectedDistrict(e.target.value)}
+          onChange={handleDistrictChange}
           disabled={disabled || !districtOptions}
           SelectProps={{
             native: true,

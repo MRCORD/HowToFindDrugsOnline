@@ -3,7 +3,7 @@ import ChatResponse from '../../components/ChatResponse';
 import SearchForm from '../../components/SearchForm';
 import { animationConfig } from '../../config/animationConfig';
 import { fetchDistrictOptions, fetchMedicineOptions, searchDrugs } from '../../services/api';
-import { logSearch } from '../../utils/ga4';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import {
   ContentWrapper,
   FadeWrapper,
@@ -15,6 +15,7 @@ import {
 } from './HomePage.styles';
 
 const HomePage = () => {
+  const { trackSearch, trackError, trackEvent } = useAnalytics();
   const [state, setState] = useState({
     searchResults: null,
     totalCount: 0,
@@ -54,12 +55,13 @@ const HomePage = () => {
           districtOptions: [],
           error: 'Failed to load options. Please try again later.',
         });
+        trackError('Options Loading Error', error.message || 'Unknown error loading options');
       }
     };
 
     loadOptions();
     setTimeout(() => updateState({ isVisible: true }), 100);
-  }, []);
+  }, [trackError]);
 
   const handleSearch = async (selectedDrug, selectedDistrict) => {
     updateState({ isFormDisabled: true, isLoading: true, searchResults: null, totalCount: 0, resetForm: false, error: null });
@@ -67,8 +69,7 @@ const HomePage = () => {
       const results = await searchDrugs(selectedDrug, selectedDistrict);
       updateState({ searchResults: results.drugs, totalCount: results.totalCount, isLoading: false });
       
-      // Log the search event
-      logSearch(`${selectedDrug} in ${selectedDistrict}`, results.totalCount);
+      trackSearch(`${selectedDrug} in ${selectedDistrict}`, results.totalCount);
     } catch (error) {
       console.error('Error searching drugs:', error);
       updateState({ 
@@ -77,11 +78,11 @@ const HomePage = () => {
         totalCount: 0,
         error: error.message || 'Failed to search drugs. Please try again.',
       });
+      trackError('Search Error', error.message || 'Unknown search error');
     } finally {
       updateState({ isFormDisabled: false });
     }
   };
-
 
   const handleRestart = () => {
     updateState({ isVisible: false });
@@ -97,6 +98,7 @@ const HomePage = () => {
       });
       setTimeout(() => updateState({ isVisible: true, showContent: true }), 100);
     }, animationConfig.fadeInDuration * 1000);
+    trackEvent('User Action', 'Restart Search', 'User initiated new search');
   };
 
   const { searchResults, totalCount, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions, error } = state;

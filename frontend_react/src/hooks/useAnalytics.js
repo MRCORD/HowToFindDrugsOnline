@@ -1,6 +1,5 @@
-// src/hooks/useAnalytics.js
 import { useCallback } from 'react';
-import { event, pageview } from '../services/ga4';
+import { event, pageview } from '../utils/ga4';
 
 export const useAnalytics = () => {
   const trackPageView = useCallback((path) => {
