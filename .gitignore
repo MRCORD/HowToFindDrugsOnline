@@ -1,5 +1,24 @@
 /archive
 /drugs
 /kubernetes
+
+# Node.js dependencies
+node_modules/
+
+# Python bytecode
+__pycache__/
+
+# Environment variables
 .env
+
+# Build output
+build/
+dist/
+
+# Logs
+logs/
 *.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db

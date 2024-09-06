@@ -116,19 +116,16 @@ def consult_details_digemid(codEstablecimiento, codProducto, max_retries=3):
     except requests.exceptions.RequestException as e:
         logger.error(f"Request Details DIGEMID failed with exception: {e}")
         return None
- 
-        
 
-def convert_objectid(doc):
-    if isinstance(doc, dict):
-        return {k: convert_objectid(v) for k, v in doc.items()}
-    elif isinstance(doc, list):
-        return [convert_objectid(i) for i in doc]
-    elif isinstance(doc, ObjectId):
-        return str(doc)
+def convert_objectid(obj):
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    elif isinstance(obj, dict):
+        return {k: convert_objectid(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_objectid(v) for v in obj]
     else:
-        return doc
-
+        return obj
 
 def consult_mongo_data(query):
     try:
@@ -137,7 +134,10 @@ def consult_mongo_data(query):
             logger.error("MongoDB connection string not found in environment variables")
             return None
 
-        client = MongoClient(connection_string)
+        client = MongoClient(connection_string,
+                             socketTimeoutMS=60000,
+                             connectTimeoutMS=60000,
+                             )
         db = client[query.db]
         collection = db[query.collection]
         logger.info("MongoDB connection was successful")
@@ -153,8 +153,8 @@ def consult_mongo_data(query):
             # Perform find query with query and limit parameters
             cursor = collection.find(query.query).limit(query.limit or 0)
 
-        # Fetch the documents from the cursor
-        documents = list(cursor)
+        # Convert ObjectId to string for all documents
+        documents = [convert_objectid(doc) for doc in cursor]
 
         logger.info(f"MongoDB query length: {len(documents)}")
         return documents
@@ -163,3 +163,7 @@ def consult_mongo_data(query):
         return None
     finally:
         client.close()
+        
+def medicineOption_concat(medicine_info):
+    medicine_dropdown = f"{medicine_info['searchTerm']} {medicine_info['concent']} [{medicine_info['nombreFormaFarmaceutica']}]"
+    return medicine_dropdown
