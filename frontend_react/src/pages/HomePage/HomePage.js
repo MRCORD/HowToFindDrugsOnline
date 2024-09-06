@@ -3,6 +3,7 @@ import ChatResponse from '../../components/ChatResponse';
 import SearchForm from '../../components/SearchForm';
 import { animationConfig } from '../../config/animationConfig';
 import { fetchDistrictOptions, fetchMedicineOptions, searchDrugs } from '../../services/api';
+import { logSearch } from '../../utils/ga4';
 import {
   ContentWrapper,
   FadeWrapper,
@@ -65,6 +66,9 @@ const HomePage = () => {
     try {
       const results = await searchDrugs(selectedDrug, selectedDistrict);
       updateState({ searchResults: results.drugs, totalCount: results.totalCount, isLoading: false });
+      
+      // Log the search event
+      logSearch(`${selectedDrug} in ${selectedDistrict}`, results.totalCount);
     } catch (error) {
       console.error('Error searching drugs:', error);
       updateState({ 
@@ -77,6 +81,7 @@ const HomePage = () => {
       updateState({ isFormDisabled: false });
     }
   };
+
 
   const handleRestart = () => {
     updateState({ isVisible: false });
