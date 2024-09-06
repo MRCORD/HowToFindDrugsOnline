@@ -82,10 +82,11 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
                 <TypeAnimation
                   sequence={[
                     introText,
-                    () => setTypewriterComplete(true)
+                    () => setTypewriterComplete(true),
+                    1
                   ]}
                   wrapper="div"
-                  cursor={true}
+                  cursor={false}
                   speed={animationConfig.typewriterSpeed}
                   style={{ whiteSpace: 'pre-line', marginBottom: '16px', color: theme.palette.text.primary }}
                 />
@@ -134,10 +135,11 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
                 <TypeAnimation
                   sequence={[
                     restartText,
-                    () => setRestartTypewriterComplete(true)
+                    () => setRestartTypewriterComplete(true),
+                    1
                   ]}
                   wrapper="div"
-                  cursor={true}
+                  cursor={false}
                   speed={animationConfig.typewriterSpeed}
                   style={{ whiteSpace: 'pre-line', marginBottom: '16px' }}
                 />
