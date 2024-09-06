@@ -1,3 +1,43 @@
+# version: '3.9'
+# services:
+#   backend:
+#     build:
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     container_name: backend_service
+#     ports:
+#       - "8000:8000"
+#     networks:
+#       - drugs-network
+#     volumes:
+#       - ./backend:/backend
+#     env_file:
+#       - .env
+#     restart: unless-stopped
+
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile
+#     container_name: frontend_service
+#     ports:
+#       - "8501:8501"
+#     depends_on:
+#       - backend
+#     networks:
+#       - drugs-network
+#     env_file:
+#       - .env
+#     volumes:
+#       - ./frontend:/frontend:rw,delegated
+#     # command: ["streamlit", "run", "app/main.py"]
+#     restart: unless-stopped
+
+# networks:
+#   drugs-network:
+#     driver: bridge
+
+
 version: '3.9'
 services:
   backend:
@@ -15,13 +55,13 @@ services:
       - .env
     restart: unless-stopped
 
-  frontend:
+  frontend_react:
     build:
-      context: ./frontend
+      context: ./frontend_react
       dockerfile: Dockerfile
-    container_name: frontend_service
+    container_name: frontend_react_service
     ports:
-      - "8501:8501"
+      - "3000:3000"
     depends_on:
       - backend
     networks:
@@ -29,8 +69,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./frontend:/frontend:rw,delegated
-    # command: ["streamlit", "run", "app/main.py"]
+      - ./frontend_react:/app:rw,delegated
     restart: unless-stopped
 
 networks:
