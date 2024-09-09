@@ -53,23 +53,27 @@ services:
       - ./backend:/backend
     env_file:
       - .env
+    environment:
+      - CORS_ORIGINS=${CORS_ORIGINS}
     restart: unless-stopped
 
   frontend_react:
     build:
       context: ./frontend_react
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
+        - REACT_APP_GOOGLE_ANALYTICS_ID=${REACT_APP_GOOGLE_ANALYTICS_ID}
     container_name: frontend_react_service
     ports:
       - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - REACT_APP_GOOGLE_ANALYTICS_ID=${REACT_APP_GOOGLE_ANALYTICS_ID}
     depends_on:
       - backend
     networks:
       - drugs-network
-    env_file:
-      - .env
-    volumes:
-      - ./frontend_react:/app:rw,delegated
     restart: unless-stopped
 
 networks:

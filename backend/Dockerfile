@@ -26,6 +26,9 @@ FROM python:3.10-slim-buster
 # Set the working directory inside the container
 WORKDIR /backend
 
+ARG BUILD_DATE
+ENV BUILD_DATE=$BUILD_DATE
+
 # Copy the requirements.txt file to the working directory
 COPY requirements.txt .
 

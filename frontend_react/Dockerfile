@@ -1,28 +1,38 @@
-# Use Node.js 18 as the base image
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine as build
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+ARG BUILD_DATE
+ENV BUILD_DATE=$BUILD_DATE
 
-# Install dependencies
+COPY package*.json ./
 RUN npm ci
 
-# Copy the rest of the frontend code
 COPY . .
+
+# Pass build arguments to environment variables
+ARG REACT_APP_API_URL
+ARG REACT_APP_GOOGLE_ANALYTICS_ID
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_GOOGLE_ANALYTICS_ID=$REACT_APP_GOOGLE_ANALYTICS_ID
 
 # Build the app
 RUN npm run build
 
-# Install serve to run the application
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY --from=build /app/build ./build
+COPY --from=build /app/package.json ./
+COPY --from=build /app/package-lock.json ./
+
 RUN npm install -g serve
 
-# Expose the port the app runs on
 EXPOSE 3000
 
-# Serve the app
 CMD ["serve", "-s", "build", "-l", "3000"]
 
 LABEL org.opencontainers.image.source https://github.com/mrcord/howtofinddrugsonline
