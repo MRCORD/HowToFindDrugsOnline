@@ -1,0 +1,2 @@
+This is a local build
+Build time: LOCAL_BUILD_TIME
