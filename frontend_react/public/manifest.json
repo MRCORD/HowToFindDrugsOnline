@@ -1,21 +1,17 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Busca tu Pepa",
+  "name": "Busca tu Pepa - Medicinas baratas en Lima",
+  "description": "Encuentra donde venden las medicinas más baratas en Lima, Perú. Localiza farmacias con los mejores precios y ahorra en tus medicamentos.",
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "pills.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "pills.png",
       "type": "image/png",
       "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
     }
   ],
   "start_url": ".",
