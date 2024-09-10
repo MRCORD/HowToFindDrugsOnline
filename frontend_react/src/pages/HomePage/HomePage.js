@@ -66,10 +66,10 @@ const HomePage = () => {
   const handleSearch = async (selectedDrug, selectedDistrict) => {
     updateState({ isFormDisabled: true, isLoading: true, searchResults: null, totalCount: 0, resetForm: false, error: null });
     try {
-      const results = await searchDrugs(selectedDrug, selectedDistrict);
+      const results = await searchDrugs(selectedDrug, selectedDistrict.descripcion);
       updateState({ searchResults: results.drugs, totalCount: results.totalCount, isLoading: false });
       
-      trackSearch(`${selectedDrug} in ${selectedDistrict}`, results.totalCount);
+      trackSearch(`${selectedDrug.dropdown} in ${selectedDistrict.descripcion}`, results.totalCount);
     } catch (error) {
       console.error('Error searching drugs:', error);
       updateState({ 

@@ -24,6 +24,7 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
   const [showRestartMessage, setShowRestartMessage] = useState(false);
   const [restartTypewriterComplete, setRestartTypewriterComplete] = useState(false);
 
+  // Handle loading state
   useEffect(() => {
     if (isLoading) {
       setShowLoadingMessage(true);
@@ -31,36 +32,41 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
       setTypewriterComplete(false);
       setVisibleResults([]);
       setShowRestartMessage(false);
-    } else if (results.length > 0) {
+    } else {
       setShowLoadingMessage(false);
-      setShowResults(true);
+      setTimeout(() => setShowResults(true), animationConfig.chatBubbleAppear * 1000);
+    }
+  }, [isLoading]);
+
+  // Handle results display
+  useEffect(() => {
+    if (showResults) {
       trackEvent('Results', 'Display Results', 'Search Results Shown', results.length);
+      if (totalCount > 0 && typewriterComplete) {
+        const timer = setInterval(() => {
+          setVisibleResults((prev) => {
+            if (prev.length < results.length) {
+              return [...prev, results[prev.length]];
+            }
+            clearInterval(timer);
+            return prev;
+          });
+        }, animationConfig.resultItemDelay * 1000);
+        return () => clearInterval(timer);
+      }
     }
-  }, [isLoading, results, trackEvent]);
+  }, [showResults, typewriterComplete, results, totalCount, trackEvent]);
 
+  // Handle restart message display
   useEffect(() => {
-    if (typewriterComplete && results.length > 0) {
-      const timer = setInterval(() => {
-        setVisibleResults((prev) => {
-          if (prev.length < results.length) {
-            return [...prev, results[prev.length]];
-          }
-          clearInterval(timer);
-          return prev;
-        });
-      }, animationConfig.resultItemDelay * 1000);
-
-      return () => clearInterval(timer);
+    if (showResults && typewriterComplete) {
+      if (totalCount === 0 || (visibleResults.length === results.length && results.length > 0)) {
+        setTimeout(() => {
+          setShowRestartMessage(true);
+        }, animationConfig.showRestartMessageDelay * 1000);
+      }
     }
-  }, [typewriterComplete, results]);
-
-  useEffect(() => {
-    if (visibleResults.length === results.length && results.length > 0) {
-      setTimeout(() => {
-        setShowRestartMessage(true);
-      }, animationConfig.showRestartMessageDelay * 1000);
-    }
-  }, [visibleResults, results]);
+  }, [showResults, typewriterComplete, visibleResults, results, totalCount]);
 
   const handleRestartClick = () => {
     trackEvent('User Action', 'Restart Search', 'User clicked restart button');
@@ -71,8 +77,10 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
     trackEvent('User Action', 'View Location', location);
   };
 
-  const introText = `Hay ${totalCount} resultados en total.\nAquí están las opciones más económicas:`;
-  const restartText = "Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️";
+  const introText = totalCount === 0
+    ? "Lo siento, no se han podido encontrar opciones en tu distrito para la medicina que buscas."
+    : `Hay ${totalCount} resultados en total.\nAquí están las opciones más económicas:`;
+  const restartText = "¿Deseas realizar otra consulta? Presiona el botón de abajo para realizar otra consulta ⬇️";
 
   return (
     <ResponseWrapper>
@@ -102,7 +110,7 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
                   speed={animationConfig.typewriterSpeed}
                   style={{ whiteSpace: 'pre-line', marginBottom: '16px', color: theme.palette.text.primary }}
                 />
-                {visibleResults.map((result, index) => (
+                {totalCount > 0 && visibleResults.map((result, index) => (
                   <Fade key={index} in={true} timeout={500}>
                     <ResultItem elevation={1}>
                       <Typography variant="body1" component="div" gutterBottom>

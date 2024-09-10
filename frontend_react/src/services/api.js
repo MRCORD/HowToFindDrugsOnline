@@ -69,28 +69,12 @@ export const searchDrugs = async (selectedDrug, selectedDistrict) => {
       throw new Error('Selected drug or district is missing');
     }
 
-    let drugName, concent, nombreFormaFarmaceutica;
+    const { searchTerm, concent, nombreFormaFarmaceutica } = selectedDrug;
 
-    const parts = selectedDrug.split(' [');
-    if (parts.length === 2) {
-      [drugName, nombreFormaFarmaceutica] = parts;
-      nombreFormaFarmaceutica = nombreFormaFarmaceutica.replace(']', '').trim();
-
-      const concentParts = drugName.match(/(\d+(\.\d+)?\s*[a-zA-Z]+)$/);
-      if (concentParts) {
-        concent = concentParts[0].trim();
-        drugName = drugName.replace(concent, '').trim();
-      } else {
-        throw new Error('Unable to parse drug concentration');
-      }
-    } else {
-      throw new Error('Invalid drug format');
-    }
-
-    console.log('Parsed drug info:', { drugName, concent, nombreFormaFarmaceutica });
+    console.log('Parsed drug info:', { searchTerm, concent, nombreFormaFarmaceutica });
 
     const response = await axios.post(`${API_URL}/v1/filtered_drugs`, {
-      selected_drug: drugName,
+      selected_drug: searchTerm,
       concent,
       nombreFormaFarmaceutica,
       selected_distrito: selectedDistrict
