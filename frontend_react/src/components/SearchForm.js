@@ -9,7 +9,7 @@ import {
 } from './SearchForm.styles';
 
 const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOptions }) => {
-  const { trackEvent, trackFormInteraction } = useAnalytics();
+  const { trackEvent, EVENT_TYPES } = useAnalytics();
   const [selectedDrug, setSelectedDrug] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
 
@@ -24,7 +24,11 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
     e.preventDefault();
     if (selectedDrug && selectedDistrict) {
       onSearch(selectedDrug, selectedDistrict);
-      trackEvent('Form Submission', 'Search Form', `${selectedDrug.dropdown} in ${selectedDistrict.descripcion}`);
+      trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+        category: 'Form Submission',
+        action: 'Submit Search',
+        label: `${selectedDrug.dropdown} in ${selectedDistrict.descripcion}`
+      });
     }
   };
 
@@ -38,7 +42,11 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
           onChange={(event, newValue) => {
             setSelectedDrug(newValue);
             if (newValue) {
-              trackFormInteraction('Select Drug', newValue.dropdown);
+              trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+                category: 'Form Interaction',
+                action: 'Select Drug',
+                label: newValue.dropdown
+              });
             }
           }}
           renderInput={(params) => (
@@ -61,7 +69,11 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
           onChange={(event, newValue) => {
             setSelectedDistrict(newValue);
             if (newValue) {
-              trackFormInteraction('Select District', newValue.descripcion);
+              trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+                category: 'Form Interaction',
+                action: 'Select District',
+                label: newValue.descripcion
+              });
             }
           }}
           renderInput={(params) => (
