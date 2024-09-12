@@ -1,16 +1,23 @@
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-// console.log('API_URL:', API_URL); // This log will be visible during build time
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+const devLog = (...args) => {
+  if (isDevelopment) {
+    console.log(...args);
+  }
+};
 
 const getCachedData = (key) => {
   const cachedData = localStorage.getItem(key);
   if (cachedData) {
     const { data, timestamp } = JSON.parse(cachedData);
     if (Date.now() - timestamp < CACHE_DURATION) {
-      console.log(`Returning cached ${key}:`, data);
+      devLog(`Returning cached ${key}:`, data);
       return data;
     }
   }
@@ -20,11 +27,11 @@ const getCachedData = (key) => {
 const setCachedData = (key, data) => {
   const cacheObject = { data, timestamp: Date.now() };
   localStorage.setItem(key, JSON.stringify(cacheObject));
-  console.log(`Cached ${key}:`, data);
+  devLog(`Cached ${key}:`, data);
 };
 
 export const fetchMedicineOptions = async () => {
-  console.log('Fetching medicine options...');
+  devLog('Fetching medicine options...');
   const cachedMedicines = getCachedData('medicineOptions');
   if (cachedMedicines) {
     return cachedMedicines;
@@ -32,7 +39,7 @@ export const fetchMedicineOptions = async () => {
 
   try {
     const response = await axios.get(`${API_URL}/v1/unique_drugs`);
-    console.log('Medicine options response:', response.data);
+    devLog('Medicine options response:', response.data);
     const medicines = response.data;
     setCachedData('medicineOptions', medicines);
     return medicines;
@@ -43,7 +50,7 @@ export const fetchMedicineOptions = async () => {
 };
 
 export const fetchDistrictOptions = async () => {
-  console.log('Fetching district options...');
+  devLog('Fetching district options...');
   const cachedDistricts = getCachedData('districtOptions');
   if (cachedDistricts) {
     return cachedDistricts;
@@ -51,7 +58,7 @@ export const fetchDistrictOptions = async () => {
 
   try {
     const response = await axios.get(`${API_URL}/v1/unique_districts`);
-    console.log('District options response:', response.data);
+    devLog('District options response:', response.data);
     const districts = response.data;
     setCachedData('districtOptions', districts);
     return districts;
@@ -63,41 +70,25 @@ export const fetchDistrictOptions = async () => {
 
 export const searchDrugs = async (selectedDrug, selectedDistrict) => {
   try {
-    console.log('Searching drugs with:', { selectedDrug, selectedDistrict });
+    devLog('Searching drugs with:', { selectedDrug, selectedDistrict });
 
     if (!selectedDrug || !selectedDistrict) {
       throw new Error('Selected drug or district is missing');
     }
 
-    let drugName, concent, nombreFormaFarmaceutica;
+    const { searchTerm, concent, nombreFormaFarmaceutica } = selectedDrug;
 
-    const parts = selectedDrug.split(' [');
-    if (parts.length === 2) {
-      [drugName, nombreFormaFarmaceutica] = parts;
-      nombreFormaFarmaceutica = nombreFormaFarmaceutica.replace(']', '').trim();
-
-      const concentParts = drugName.match(/(\d+(\.\d+)?\s*[a-zA-Z]+)$/);
-      if (concentParts) {
-        concent = concentParts[0].trim();
-        drugName = drugName.replace(concent, '').trim();
-      } else {
-        throw new Error('Unable to parse drug concentration');
-      }
-    } else {
-      throw new Error('Invalid drug format');
-    }
-
-    console.log('Parsed drug info:', { drugName, concent, nombreFormaFarmaceutica });
+    devLog('Parsed drug info:', { searchTerm, concent, nombreFormaFarmaceutica });
 
     const response = await axios.post(`${API_URL}/v1/filtered_drugs`, {
-      selected_drug: drugName,
+      selected_drug: searchTerm,
       concent,
       nombreFormaFarmaceutica,
       selected_distrito: selectedDistrict
     });
 
-    console.log('Search drugs response:', response.data);
-    return response.data; // This now includes both totalCount and drugs
+    devLog('Search drugs response:', response.data);
+    return response.data;
   } catch (error) {
     console.error('Error searching drugs:', error);
     throw error;

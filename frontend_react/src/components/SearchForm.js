@@ -1,92 +1,94 @@
 import React, { useEffect, useState } from 'react';
+import { TextField } from '@mui/material';
 import { useAnalytics } from '../hooks/useAnalytics';
 import {
   FormWrapper,
   StyledButton,
   StyledPaper,
-  StyledTextField
+  StyledAutocomplete
 } from './SearchForm.styles';
 
 const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOptions }) => {
-  const { trackEvent, trackFormInteraction } = useAnalytics();
-  const [selectedDrug, setSelectedDrug] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const { trackEvent, EVENT_TYPES } = useAnalytics();
+  const [selectedDrug, setSelectedDrug] = useState(null);
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
 
   useEffect(() => {
     if (reset) {
-      setSelectedDrug('');
-      setSelectedDistrict('');
+      setSelectedDrug(null);
+      setSelectedDistrict(null);
     }
   }, [reset]);
 
-  useEffect(() => {
-    console.log('Medicine options in SearchForm:', medicineOptions);
-    console.log('District options in SearchForm:', districtOptions);
-  }, [medicineOptions, districtOptions]);
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSearch(selectedDrug, selectedDistrict);
-    trackEvent('Form Submission', 'Search Form', `${selectedDrug} in ${selectedDistrict}`);
-  };
-
-  const handleDrugChange = (e) => {
-    const newDrug = e.target.value;
-    setSelectedDrug(newDrug);
-    if (newDrug) {
-      trackFormInteraction('Select Drug', newDrug);
-    }
-  };
-
-  const handleDistrictChange = (e) => {
-    const newDistrict = e.target.value;
-    setSelectedDistrict(newDistrict);
-    if (newDistrict) {
-      trackFormInteraction('Select District', newDistrict);
+    if (selectedDrug && selectedDistrict) {
+      onSearch(selectedDrug, selectedDistrict);
+      trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+        category: 'Form Submission',
+        action: 'Submit Search',
+        label: `${selectedDrug.dropdown} in ${selectedDistrict.descripcion}`
+      });
     }
   };
 
   return (
     <FormWrapper>
       <StyledPaper component="form" onSubmit={handleSubmit} elevation={3}>
-        <StyledTextField
-          select
-          fullWidth
-          label="Medicina"
+        <StyledAutocomplete
+          options={medicineOptions || []}
+          getOptionLabel={(option) => option.dropdown}
           value={selectedDrug}
-          onChange={handleDrugChange}
+          onChange={(event, newValue) => {
+            setSelectedDrug(newValue);
+            if (newValue) {
+              trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+                category: 'Form Interaction',
+                action: 'Select Drug',
+                label: newValue.dropdown
+              });
+            }
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Medicina"
+              fullWidth
+              disabled={disabled}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          )}
           disabled={disabled || !medicineOptions}
-          SelectProps={{
-            native: true,
-          }}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        >
-          <option value="">Selecciona la medicina...</option>
-          {medicineOptions && medicineOptions.map((drug) => (
-            <option key={drug.dropdown} value={drug.dropdown}>{drug.dropdown}</option>
-          ))}
-        </StyledTextField>
-        <StyledTextField
-          select
-          fullWidth
-          label="Distrito"
+        />
+        <StyledAutocomplete
+          options={districtOptions || []}
+          getOptionLabel={(option) => option.descripcion}
           value={selectedDistrict}
-          onChange={handleDistrictChange}
+          onChange={(event, newValue) => {
+            setSelectedDistrict(newValue);
+            if (newValue) {
+              trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+                category: 'Form Interaction',
+                action: 'Select District',
+                label: newValue.descripcion
+              });
+            }
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Distrito"
+              fullWidth
+              disabled={disabled}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          )}
           disabled={disabled || !districtOptions}
-          SelectProps={{
-            native: true,
-          }}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        >
-          <option value="">Selecciona el distrito...</option>
-          {districtOptions && districtOptions.map((district) => (
-            <option key={district.descripcion} value={district.descripcion}>{district.descripcion}</option>
-          ))}
-        </StyledTextField>
+        />
         <StyledButton
           type="submit"
           variant="contained"

@@ -15,7 +15,7 @@ import {
 } from './HomePage.styles';
 
 const HomePage = () => {
-  const { trackSearch, trackError, trackEvent } = useAnalytics();
+  const { trackEvent, setAnalyticsGroup, GROUP_TYPES, EVENT_TYPES } = useAnalytics();
   const [state, setState] = useState({
     searchResults: null,
     totalCount: 0,
@@ -35,50 +35,61 @@ const HomePage = () => {
 
   useEffect(() => {
     const loadOptions = async () => {
-      console.log('Loading options...');
       try {
         const [medicines, districts] = await Promise.all([
           fetchMedicineOptions(),
           fetchDistrictOptions()
         ]);
-        console.log('Medicines:', medicines);
-        console.log('Districts:', districts);
         updateState({ 
           medicineOptions: medicines.drugs,
           districtOptions: districts.districts,
         });
-        console.log('State updated with options');
       } catch (error) {
-        console.error('Error loading options:', error);
         updateState({ 
           medicineOptions: [],
           districtOptions: [],
           error: 'Failed to load options. Please try again later.',
         });
-        trackError('Options Loading Error', error.message || 'Unknown error loading options');
+        trackEvent(EVENT_TYPES.ERROR, {
+          category: 'Data Loading',
+          action: 'Options Loading Error',
+          label: error.message || 'Unknown error loading options'
+        });
       }
     };
 
     loadOptions();
     setTimeout(() => updateState({ isVisible: true }), 100);
-  }, [trackError]);
+  }, [trackEvent, EVENT_TYPES]);
 
   const handleSearch = async (selectedDrug, selectedDistrict) => {
     updateState({ isFormDisabled: true, isLoading: true, searchResults: null, totalCount: 0, resetForm: false, error: null });
     try {
-      const results = await searchDrugs(selectedDrug, selectedDistrict);
+      const results = await searchDrugs(selectedDrug, selectedDistrict.descripcion);
       updateState({ searchResults: results.drugs, totalCount: results.totalCount, isLoading: false });
       
-      trackSearch(`${selectedDrug} in ${selectedDistrict}`, results.totalCount);
+      setAnalyticsGroup(GROUP_TYPES.DISTRICT, selectedDistrict.descripcion, {
+        name: selectedDistrict.descripcion,
+      });
+      
+      trackEvent(EVENT_TYPES.SEARCH, {
+        category: 'Drug Search',
+        action: 'Perform Search',
+        label: `${selectedDrug.dropdown} in ${selectedDistrict.descripcion}`,
+        value: results.totalCount
+      });
     } catch (error) {
-      console.error('Error searching drugs:', error);
       updateState({ 
         isLoading: false, 
         searchResults: [], 
         totalCount: 0,
         error: error.message || 'Failed to search drugs. Please try again.',
       });
-      trackError('Search Error', error.message || 'Unknown search error');
+      trackEvent(EVENT_TYPES.ERROR, {
+        category: 'Drug Search',
+        action: 'Search Error',
+        label: error.message || 'Unknown search error'
+      });
     } finally {
       updateState({ isFormDisabled: false });
     }
@@ -98,7 +109,11 @@ const HomePage = () => {
       });
       setTimeout(() => updateState({ isVisible: true, showContent: true }), 100);
     }, animationConfig.fadeInDuration * 1000);
-    trackEvent('User Action', 'Restart Search', 'User initiated new search');
+    trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+      category: 'User Action',
+      action: 'Restart Search',
+      label: 'User initiated new search'
+    });
   };
 
   const { searchResults, totalCount, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions, error } = state;
