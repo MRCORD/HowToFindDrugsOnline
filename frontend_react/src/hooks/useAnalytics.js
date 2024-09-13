@@ -1,16 +1,16 @@
 import { useCallback } from 'react';
-import { 
-  trackPageView, 
-  trackEvent, 
+import {
+  trackEvent,
+  trackPageView,
   identifyUser,
   resetUser,
+  setGroup,
   isFeatureEnabled,
-  getFeatureFlagValue,
-  setAnalyticsGroup,
-  GROUP_TYPES,
+  getFeatureFlagPayload,
   EVENT_TYPES,
+  GROUP_TYPES,
   FEATURE_FLAGS
-} from '../utils/analytics';
+} from '../analytics';
 
 export const useAnalytics = () => {
   return {
@@ -19,10 +19,10 @@ export const useAnalytics = () => {
     identifyUser: useCallback(identifyUser, []),
     resetUser: useCallback(resetUser, []),
     isFeatureEnabled: useCallback(isFeatureEnabled, []),
-    getFeatureFlagValue: useCallback(getFeatureFlagValue, []),
-    setAnalyticsGroup: useCallback(setAnalyticsGroup, []),
-    GROUP_TYPES,
+    getFeatureFlagPayload: useCallback(getFeatureFlagPayload, []),
+    setGroup: useCallback(setGroup, []),
     EVENT_TYPES,
+    GROUP_TYPES,
     FEATURE_FLAGS
   };
 };

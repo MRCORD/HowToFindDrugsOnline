@@ -15,7 +15,7 @@ import {
 } from './HomePage.styles';
 
 const HomePage = () => {
-  const { trackEvent, setAnalyticsGroup, GROUP_TYPES, EVENT_TYPES } = useAnalytics();
+  const { trackEvent, setGroup, GROUP_TYPES, EVENT_TYPES } = useAnalytics();
   const [state, setState] = useState({
     searchResults: null,
     totalCount: 0,
@@ -68,11 +68,11 @@ const HomePage = () => {
       const results = await searchDrugs(selectedDrug, selectedDistrict.descripcion);
       updateState({ searchResults: results.drugs, totalCount: results.totalCount, isLoading: false });
       
-      setAnalyticsGroup(GROUP_TYPES.DISTRICT, selectedDistrict.descripcion, {
+      setGroup(GROUP_TYPES.DISTRICT, selectedDistrict.descripcion, {
         name: selectedDistrict.descripcion,
       });
       
-      trackEvent(EVENT_TYPES.SEARCH, {
+      trackEvent(EVENT_TYPES.SEARCH_SUBMITTED, {
         category: 'Drug Search',
         action: 'Perform Search',
         label: `${selectedDrug.dropdown} in ${selectedDistrict.descripcion}`,
@@ -109,7 +109,7 @@ const HomePage = () => {
       });
       setTimeout(() => updateState({ isVisible: true, showContent: true }), 100);
     }, animationConfig.fadeInDuration * 1000);
-    trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+    trackEvent(EVENT_TYPES.RESET_SEARCH, {
       category: 'User Action',
       action: 'Restart Search',
       label: 'User initiated new search'

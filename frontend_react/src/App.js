@@ -4,7 +4,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import HomePage from './pages/HomePage/HomePage';
 import theme from './styles/theme';
 import EnvDisplay from './components/EnvDisplay';
-import { initAnalytics, trackPageView } from './utils/analytics';
+import { initAnalytics, trackPageView } from './analytics';
 
 function App() {
   useEffect(() => {

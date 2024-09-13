@@ -16,7 +16,7 @@ import { LocationOn } from '@mui/icons-material';
 
 const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
   const theme = useTheme();
-  const { trackEvent } = useAnalytics();
+  const { trackEvent, EVENT_TYPES } = useAnalytics();
   const [showLoadingMessage, setShowLoadingMessage] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [typewriterComplete, setTypewriterComplete] = useState(false);
@@ -41,7 +41,12 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
   // Handle results display
   useEffect(() => {
     if (showResults) {
-      trackEvent('Results', 'Display Results', 'Search Results Shown', results.length);
+      trackEvent(EVENT_TYPES.RESULTS_DISPLAYED, {
+        category: 'Results',
+        action: 'Display Results',
+        label: 'Search Results Shown',
+        value: results.length
+      });
       if (totalCount > 0 && typewriterComplete) {
         const timer = setInterval(() => {
           setVisibleResults((prev) => {
@@ -55,7 +60,7 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
         return () => clearInterval(timer);
       }
     }
-  }, [showResults, typewriterComplete, results, totalCount, trackEvent]);
+  }, [showResults, typewriterComplete, results, totalCount, trackEvent, EVENT_TYPES]);
 
   // Handle restart message display
   useEffect(() => {
@@ -69,12 +74,26 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
   }, [showResults, typewriterComplete, visibleResults, results, totalCount]);
 
   const handleRestartClick = () => {
-    trackEvent('User Action', 'Restart Search', 'User clicked restart button');
+    trackEvent(EVENT_TYPES.RESET_SEARCH, {
+      category: 'User Action',
+      action: 'Restart Search',
+      label: 'User clicked restart button'
+    });
     onRestart();
   };
 
-  const handleLocationClick = (location) => {
-    trackEvent('User Action', 'View Location', location);
+  const handleLocationClick = (result) => {
+    trackEvent(EVENT_TYPES.LOCATION_CLICKED, {
+      category: 'User Action',
+      action: 'View Location',
+      label: result.nombreComercial,
+      properties: {
+        drugName: result.nombreProducto,
+        pharmacy: result.nombreComercial,
+        address: result.direccion,
+        price: result.precio2
+      }
+    });
   };
 
   const introText = totalCount === 0
@@ -133,7 +152,7 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
                           mt: 1,
                           fontSize: '0.875rem'
                         }}
-                        onClick={() => handleLocationClick(result.direccion)}
+                        onClick={() => handleLocationClick(result)}
                       >
                         <LocationOn sx={{ mr: 0.5 }} fontSize="small" />
                         {result.direccion}

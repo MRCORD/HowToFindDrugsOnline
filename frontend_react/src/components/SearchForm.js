@@ -24,7 +24,7 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
     e.preventDefault();
     if (selectedDrug && selectedDistrict) {
       onSearch(selectedDrug, selectedDistrict);
-      trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+      trackEvent(EVENT_TYPES.SEARCH_SUBMITTED, {
         category: 'Form Submission',
         action: 'Submit Search',
         label: `${selectedDrug.dropdown} in ${selectedDistrict.descripcion}`
@@ -42,10 +42,15 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
           onChange={(event, newValue) => {
             setSelectedDrug(newValue);
             if (newValue) {
-              trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+              trackEvent(EVENT_TYPES.DRUG_SELECTED, {
                 category: 'Form Interaction',
                 action: 'Select Drug',
-                label: newValue.dropdown
+                label: newValue.dropdown,
+                properties: {
+                  drugName: newValue.dropdown,
+                  concentration: newValue.concent,
+                  formType: newValue.nombreFormaFarmaceutica
+                }
               });
             }
           }}
@@ -69,10 +74,13 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
           onChange={(event, newValue) => {
             setSelectedDistrict(newValue);
             if (newValue) {
-              trackEvent(EVENT_TYPES.FORM_INTERACTION, {
+              trackEvent(EVENT_TYPES.DISTRICT_SELECTED, {
                 category: 'Form Interaction',
                 action: 'Select District',
-                label: newValue.descripcion
+                label: newValue.descripcion,
+                properties: {
+                  districtName: newValue.descripcion
+                }
               });
             }
           }}
