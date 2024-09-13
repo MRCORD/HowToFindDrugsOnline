@@ -12,17 +12,24 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
   const { trackEvent, EVENT_TYPES } = useAnalytics();
   const [selectedDrug, setSelectedDrug] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [isFormDisabled, setIsFormDisabled] = useState(disabled);
 
   useEffect(() => {
     if (reset) {
       setSelectedDrug(null);
       setSelectedDistrict(null);
+      setIsFormDisabled(false);
     }
   }, [reset]);
 
+  useEffect(() => {
+    setIsFormDisabled(disabled);
+  }, [disabled]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (selectedDrug && selectedDistrict) {
+    if (selectedDrug && selectedDistrict && !isFormDisabled) {
+      setIsFormDisabled(true);
       onSearch(selectedDrug, selectedDistrict);
       trackEvent(EVENT_TYPES.SEARCH_SUBMITTED, {
         category: 'Form Submission',
@@ -40,18 +47,20 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
           getOptionLabel={(option) => option.dropdown}
           value={selectedDrug}
           onChange={(event, newValue) => {
-            setSelectedDrug(newValue);
-            if (newValue) {
-              trackEvent(EVENT_TYPES.DRUG_SELECTED, {
-                category: 'Form Interaction',
-                action: 'Select Drug',
-                label: newValue.dropdown,
-                properties: {
-                  drugName: newValue.dropdown,
-                  concentration: newValue.concent,
-                  formType: newValue.nombreFormaFarmaceutica
-                }
-              });
+            if (!isFormDisabled) {
+              setSelectedDrug(newValue);
+              if (newValue) {
+                trackEvent(EVENT_TYPES.DRUG_SELECTED, {
+                  category: 'Form Interaction',
+                  action: 'Select Drug',
+                  label: newValue.dropdown,
+                  properties: {
+                    drugName: newValue.dropdown,
+                    concentration: newValue.concent,
+                    formType: newValue.nombreFormaFarmaceutica
+                  }
+                });
+              }
             }
           }}
           renderInput={(params) => (
@@ -59,29 +68,31 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
               {...params}
               label="Medicina"
               fullWidth
-              disabled={disabled}
+              disabled={isFormDisabled}
               InputLabelProps={{
                 shrink: true,
               }}
             />
           )}
-          disabled={disabled || !medicineOptions}
+          disabled={isFormDisabled}
         />
         <StyledAutocomplete
           options={districtOptions || []}
           getOptionLabel={(option) => option.descripcion}
           value={selectedDistrict}
           onChange={(event, newValue) => {
-            setSelectedDistrict(newValue);
-            if (newValue) {
-              trackEvent(EVENT_TYPES.DISTRICT_SELECTED, {
-                category: 'Form Interaction',
-                action: 'Select District',
-                label: newValue.descripcion,
-                properties: {
-                  districtName: newValue.descripcion
-                }
-              });
+            if (!isFormDisabled) {
+              setSelectedDistrict(newValue);
+              if (newValue) {
+                trackEvent(EVENT_TYPES.DISTRICT_SELECTED, {
+                  category: 'Form Interaction',
+                  action: 'Select District',
+                  label: newValue.descripcion,
+                  properties: {
+                    districtName: newValue.descripcion
+                  }
+                });
+              }
             }
           }}
           renderInput={(params) => (
@@ -89,19 +100,19 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
               {...params}
               label="Distrito"
               fullWidth
-              disabled={disabled}
+              disabled={isFormDisabled}
               InputLabelProps={{
                 shrink: true,
               }}
             />
           )}
-          disabled={disabled || !districtOptions}
+          disabled={isFormDisabled}
         />
         <StyledButton
           type="submit"
           variant="contained"
           fullWidth
-          disabled={disabled || !selectedDrug || !selectedDistrict}
+          disabled={isFormDisabled || !selectedDrug || !selectedDistrict}
         >
           Consultar
         </StyledButton>

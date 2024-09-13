@@ -11,22 +11,26 @@ import {
   StyledDivider,
   Subtitle,
   Title,
-  ErrorMessage
+  ErrorMessage,
+  LoadingWrapper,
+  LoadingText
 } from './HomePage.styles';
+import { CircularProgress } from '@mui/material';
 
 const HomePage = () => {
   const { trackEvent, setGroup, GROUP_TYPES, EVENT_TYPES } = useAnalytics();
   const [state, setState] = useState({
     searchResults: null,
     totalCount: 0,
-    isFormDisabled: false,
-    isLoading: false,
+    isFormDisabled: true,
+    isLoading: true,
     isVisible: false,
-    showContent: true,
+    showContent: false,
     resetForm: false,
     medicineOptions: null,
     districtOptions: null,
     error: null,
+    isSearching: false,
   });
 
   const updateState = (newState) => {
@@ -43,12 +47,15 @@ const HomePage = () => {
         updateState({ 
           medicineOptions: medicines.drugs,
           districtOptions: districts.districts,
+          isFormDisabled: false,
+          isLoading: false
         });
       } catch (error) {
         updateState({ 
           medicineOptions: [],
           districtOptions: [],
           error: 'Failed to load options. Please try again later.',
+          isLoading: false
         });
         trackEvent(EVENT_TYPES.ERROR, {
           category: 'Data Loading',
@@ -63,10 +70,10 @@ const HomePage = () => {
   }, [trackEvent, EVENT_TYPES]);
 
   const handleSearch = async (selectedDrug, selectedDistrict) => {
-    updateState({ isFormDisabled: true, isLoading: true, searchResults: null, totalCount: 0, resetForm: false, error: null });
+    updateState({ isFormDisabled: true, isSearching: true, searchResults: null, totalCount: 0, resetForm: false, error: null, showContent: true });
     try {
       const results = await searchDrugs(selectedDrug, selectedDistrict.descripcion);
-      updateState({ searchResults: results.drugs, totalCount: results.totalCount, isLoading: false });
+      updateState({ searchResults: results.drugs, totalCount: results.totalCount, isSearching: false });
       
       setGroup(GROUP_TYPES.DISTRICT, selectedDistrict.descripcion, {
         name: selectedDistrict.descripcion,
@@ -80,7 +87,7 @@ const HomePage = () => {
       });
     } catch (error) {
       updateState({ 
-        isLoading: false, 
+        isSearching: false, 
         searchResults: [], 
         totalCount: 0,
         error: error.message || 'Failed to search drugs. Please try again.',
@@ -90,8 +97,6 @@ const HomePage = () => {
         action: 'Search Error',
         label: error.message || 'Unknown search error'
       });
-    } finally {
-      updateState({ isFormDisabled: false });
     }
   };
 
@@ -106,8 +111,9 @@ const HomePage = () => {
         showContent: false,
         resetForm: true,
         error: null,
+        isSearching: false,
       });
-      setTimeout(() => updateState({ isVisible: true, showContent: true }), 100);
+      setTimeout(() => updateState({ isVisible: true }), 100);
     }, animationConfig.fadeInDuration * 1000);
     trackEvent(EVENT_TYPES.RESET_SEARCH, {
       category: 'User Action',
@@ -116,7 +122,7 @@ const HomePage = () => {
     });
   };
 
-  const { searchResults, totalCount, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions, error } = state;
+  const { searchResults, totalCount, isFormDisabled, isLoading, isVisible, showContent, resetForm, medicineOptions, districtOptions, error, isSearching } = state;
 
   return (
     <StyledContainer maxWidth="md">
@@ -129,22 +135,39 @@ const HomePage = () => {
             ¡Hola! Soy tu asistente virtual de búsqueda de medicinas en Lima. Estoy aquí para ayudarte a encontrar las medicinas que necesitas. ¿En qué puedo ayudarte hoy?
           </Subtitle>
           {error && <ErrorMessage>{error}</ErrorMessage>}
-          <SearchForm 
-            onSearch={handleSearch} 
-            disabled={isFormDisabled} 
-            reset={resetForm}
-            medicineOptions={medicineOptions}
-            districtOptions={districtOptions}
-          />
-          {showContent && (isLoading || searchResults) && (
+          {isLoading ? (
+            <LoadingWrapper>
+              <CircularProgress size={24} />
+              <LoadingText variant="body1">
+                🤖 Iniciando Inteligencia Artificial...
+              </LoadingText>
+            </LoadingWrapper>
+          ) : (
+            <SearchForm 
+              onSearch={handleSearch} 
+              disabled={isFormDisabled}
+              reset={resetForm}
+              medicineOptions={medicineOptions}
+              districtOptions={districtOptions}
+            />
+          )}
+          {showContent && (
             <>
               <StyledDivider />
-              <ChatResponse
-                results={searchResults || []}
-                totalCount={totalCount}
-                isLoading={isLoading}
-                onRestart={handleRestart}
-              />
+              {isSearching ? (
+                <LoadingWrapper>
+                  <CircularProgress size={24} />
+                  <LoadingText variant="body1">
+                    Déjame buscar la información que necesitas...
+                  </LoadingText>
+                </LoadingWrapper>
+              ) : (
+                <ChatResponse
+                  results={searchResults || []}
+                  totalCount={totalCount}
+                  onRestart={handleRestart}
+                />
+              )}
             </>
           )}
         </ContentWrapper>
