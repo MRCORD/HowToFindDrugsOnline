@@ -1,35 +1,42 @@
-import posthog from 'posthog-js';
-import { trackEvent, trackPageView, EVENT_TYPES } from './events';
-import { setGroup, GROUP_TYPES } from './groups';
+import { initGA, pageview as ga4PageView, event as ga4Event } from '../utils/ga4';
+import { initPostHog, identifyUser, resetUser } from '../utils/posthog';
+import { trackEvent as posthogTrackEvent, trackPageView as posthogTrackPageView, EVENT_TYPES } from './events';
 import { isFeatureEnabled, getFeatureFlagPayload, FEATURE_FLAGS } from './featureFlags';
+import { setGroup, GROUP_TYPES } from './groups';
 
 export const initAnalytics = () => {
-  posthog.init(process.env.REACT_APP_POSTHOG_API_KEY, {
-    api_host: process.env.REACT_APP_POSTHOG_HOST || 'https://app.posthog.com',
-    capture_pageview: false,
-    autocapture: true,
-    session_recording: {
-      enabled: true,
-      consent_cookie_name: 'posthog_session_recording_consent'
-    }
-  });
+  initGA();
+  initPostHog();
 };
 
-export const identifyUser = (userId, traits = {}) => {
-  posthog.identify(userId, traits);
+export const trackPageView = (path) => {
+  ga4PageView(path);
+  posthogTrackPageView(path);
 };
 
-export const resetUser = () => {
-  posthog.reset();
+export const trackEvent = (eventName, properties) => {
+  const { category, action, label, value } = properties;
+  
+  // Google Analytics
+  const ga4Category = category || 'User Interaction';
+  const ga4Action = action || eventName.split(':').pop();
+  ga4Event(ga4Category, ga4Action, label, value);
+
+  // PostHog
+  posthogTrackEvent(eventName, properties);
 };
+
+export const setAnalyticsGroup = (groupType, groupKey, groupProperties = {}) => {
+  setGroup(groupType, groupKey, groupProperties);
+};
+
+export const getFeatureFlagValue = getFeatureFlagPayload;
 
 export {
-  trackEvent,
-  trackPageView,
-  EVENT_TYPES,
-  setGroup,
-  GROUP_TYPES,
+  identifyUser,
+  resetUser,
   isFeatureEnabled,
-  getFeatureFlagPayload,
+  EVENT_TYPES,
+  GROUP_TYPES,
   FEATURE_FLAGS
 };
