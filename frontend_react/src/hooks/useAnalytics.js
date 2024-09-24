@@ -4,9 +4,9 @@ import {
   trackPageView,
   identifyUser,
   resetUser,
-  setGroup,
+  setAnalyticsGroup as setGroup,
   isFeatureEnabled,
-  getFeatureFlagPayload,
+  getFeatureFlagValue, // Changed from getFeatureFlagPayload
   EVENT_TYPES,
   GROUP_TYPES,
   FEATURE_FLAGS
@@ -19,7 +19,7 @@ export const useAnalytics = () => {
     identifyUser: useCallback(identifyUser, []),
     resetUser: useCallback(resetUser, []),
     isFeatureEnabled: useCallback(isFeatureEnabled, []),
-    getFeatureFlagPayload: useCallback(getFeatureFlagPayload, []),
+    getFeatureFlagValue: useCallback(getFeatureFlagValue, []), // Changed from getFeatureFlagPayload
     setGroup: useCallback(setGroup, []),
     EVENT_TYPES,
     GROUP_TYPES,

@@ -53,3 +53,16 @@ export const ErrorMessage = styled('div')(({ theme }) => ({
   color: theme.palette.error.main,
   marginBottom: theme.spacing(2),
 }));
+
+export const LoadingWrapper = styled('div')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'flex-start',
+  width: '100%',
+  padding: theme.spacing(2),
+}));
+
+export const LoadingText = styled(Typography)(({ theme }) => ({
+  marginLeft: theme.spacing(2),
+}));

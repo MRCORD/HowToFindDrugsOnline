@@ -3,42 +3,28 @@ import { TypeAnimation } from 'react-type-animation';
 import { animationConfig } from '../config/animationConfig';
 import { useAnalytics } from '../hooks/useAnalytics';
 import {
-  LoadingBubble,
   MessageBubble,
   ResponseWrapper,
   RestartButton,
   ResultItem,
   StyledAvatar,
-  StyledCircularProgress
 } from './ChatResponse.styles';
 import { Box, Fade, Link, Typography, useTheme } from '@mui/material';
 import { LocationOn } from '@mui/icons-material';
 
-const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
+const ChatResponse = ({ results, totalCount, onRestart }) => {
   const theme = useTheme();
   const { trackEvent, EVENT_TYPES } = useAnalytics();
-  const [showLoadingMessage, setShowLoadingMessage] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [typewriterComplete, setTypewriterComplete] = useState(false);
   const [visibleResults, setVisibleResults] = useState([]);
   const [showRestartMessage, setShowRestartMessage] = useState(false);
   const [restartTypewriterComplete, setRestartTypewriterComplete] = useState(false);
 
-  // Handle loading state
   useEffect(() => {
-    if (isLoading) {
-      setShowLoadingMessage(true);
-      setShowResults(false);
-      setTypewriterComplete(false);
-      setVisibleResults([]);
-      setShowRestartMessage(false);
-    } else {
-      setShowLoadingMessage(false);
-      setTimeout(() => setShowResults(true), animationConfig.chatBubbleAppear * 1000);
-    }
-  }, [isLoading]);
+    setShowResults(true);
+  }, []);
 
-  // Handle results display
   useEffect(() => {
     if (showResults) {
       trackEvent(EVENT_TYPES.RESULTS_DISPLAYED, {
@@ -62,7 +48,6 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
     }
   }, [showResults, typewriterComplete, results, totalCount, trackEvent, EVENT_TYPES]);
 
-  // Handle restart message display
   useEffect(() => {
     if (showResults && typewriterComplete) {
       if (totalCount === 0 || (visibleResults.length === results.length && results.length > 0)) {
@@ -103,15 +88,6 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
 
   return (
     <ResponseWrapper>
-      <Fade in={showLoadingMessage} timeout={animationConfig.chatBubbleAppear * 1000}>
-        <LoadingBubble elevation={0} style={{ display: showLoadingMessage ? 'flex' : 'none' }}>
-          <StyledCircularProgress size={24} />
-          <Typography variant="body2">
-            Déjame buscar la información que necesitas...
-          </Typography>
-        </LoadingBubble>
-      </Fade>
-
       {showResults && (
         <Fade in={showResults} timeout={animationConfig.chatBubbleAppear * 1000}>
           <MessageBubble elevation={0}>
@@ -130,7 +106,7 @@ const ChatResponse = ({ results, totalCount, isLoading, onRestart }) => {
                   style={{ whiteSpace: 'pre-line', marginBottom: '16px', color: theme.palette.text.primary }}
                 />
                 {totalCount > 0 && visibleResults.map((result, index) => (
-                  <Fade key={index} in={true} timeout={500}>
+                  <Fade key={index} in={true} timeout={animationConfig.fadeInDuration * 1000}>
                     <ResultItem elevation={1}>
                       <Typography variant="body1" component="div" gutterBottom>
                         <strong>{result.nombreProducto}</strong>

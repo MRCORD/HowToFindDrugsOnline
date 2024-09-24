@@ -1,5 +1,4 @@
 import posthog from 'posthog-js';
-import { GROUP_TYPES } from '../config/analyticsConfig';
 
 export const initPostHog = () => {
   posthog.init(process.env.REACT_APP_POSTHOG_API_KEY, {
@@ -13,36 +12,12 @@ export const initPostHog = () => {
   });
 };
 
-export const capturePageView = (path) => {
-  posthog.capture('$pageview', { path });
-};
-
-export const captureEvent = (eventName, properties) => {
-  posthog.capture(eventName, properties);
-};
-
-export const identifyUser = (userId, traits = {}) => {
-  posthog.identify(userId, traits);
-};
-
-export const resetUser = () => {
-  posthog.reset();
-};
-
-export const getFeatureFlag = (flagKey, defaultValue) => {
-  return posthog.isFeatureEnabled(flagKey) ?? defaultValue;
-};
-
-export const getFeatureFlagPayload = (flagKey) => {
-  return posthog.getFeatureFlagPayload(flagKey);
-};
-
-export const setGroup = (groupType, groupKey, groupProperties = {}) => {
-  if (!Object.values(GROUP_TYPES).includes(groupType)) {
-    console.warn(`Invalid group type: ${groupType}`);
-    return;
-  }
-  posthog.group(groupType, groupKey, groupProperties);
-};
+export const captureEvent = posthog.capture.bind(posthog);
+export const capturePageView = (path) => posthog.capture('$pageview', { path });
+export const identifyUser = posthog.identify.bind(posthog);
+export const resetUser = posthog.reset.bind(posthog);
+export const isFeatureEnabled = posthog.isFeatureEnabled.bind(posthog);
+export const getFeatureFlagPayload = posthog.getFeatureFlagPayload.bind(posthog);
+export const setGroup = posthog.group.bind(posthog);
 
 export default posthog;
