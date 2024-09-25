@@ -1,38 +1,45 @@
 import logging
-import os
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from . import views
+from app.core.config import settings
+from app.api.v1.router import api_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Create the main FastAPI application
-app = FastAPI(docs_url=None, redoc_url=None)
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.PROJECT_VERSION,
+    docs_url="/docs",  # Enable Swagger UI for the main app
+    redoc_url="/redoc"  # Enable ReDoc for the main app
+)
 
 # Create a sub-application for /api routes
-api_app = FastAPI(docs_url='/docs', redoc_url='/redoc')
+api_app = FastAPI(
+    title=f"{settings.PROJECT_NAME} - API",
+    version=settings.PROJECT_VERSION,
+    docs_url="/docs",  # Swagger UI for the API app
+    redoc_url="/redoc"  # ReDoc for the API app
+)
 
 # Configure CORS
-origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://buscatupepa.com,http://frontend_react_service:3000").split(",")
-origins = [origin.strip() for origin in origins if origin.strip()]
-
-logger.info(f"Allowed CORS origins: {origins}")
+logger.info(f"Allowed CORS origins: {settings.ALLOWED_ORIGINS}")
 
 # Apply CORS middleware to both the main app and the api_app
 for application in [app, api_app]:
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
 # Include router in the api_app
-api_app.include_router(views.router)
+api_app.include_router(api_router, prefix="/v1")
 
 # Mount the api_app under /api
 app.mount("/api", api_app)
@@ -53,18 +60,11 @@ async def get_logs():
 def read_root():
     return {"message": "Welcome to the API. Please use /api for all endpoints."}
 
-# Catch-all route for the main app to redirect non-/api requests
-@app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def catch_all(request: Request, path_name: str):
-    return JSONResponse(
-        status_code=404,
-        content={"message": f"Endpoint /{path_name} not found. Please use /api for all endpoints."}
-    )
-
 # Startup event to log when the application starts
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application has started")
+    logger.info(f"Main app routes: {[route.path for route in app.routes]}")
     logger.info(f"API routes: {[route.path for route in api_app.routes]}")
 
 # Shutdown event to log when the application stops
