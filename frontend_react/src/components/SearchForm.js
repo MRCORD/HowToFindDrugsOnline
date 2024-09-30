@@ -55,7 +55,7 @@ const SearchForm = ({ onSearch, disabled, reset, medicineOptions, districtOption
                   action: 'Select Drug',
                   label: newValue.dropdown,
                   properties: {
-                    drugName: newValue.dropdown,
+                    drugName: newValue.searchTerm,
                     concentration: newValue.concent,
                     formType: newValue.nombreFormaFarmaceutica
                   }
