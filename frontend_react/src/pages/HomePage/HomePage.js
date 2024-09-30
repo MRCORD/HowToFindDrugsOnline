@@ -45,8 +45,8 @@ const HomePage = () => {
           fetchDistrictOptions()
         ]);
         updateState({ 
-          medicineOptions: medicines.drugs,
-          districtOptions: districts.districts,
+          medicineOptions: medicines, // API now returns the array directly
+          districtOptions: districts, // API now returns the array directly
           isFormDisabled: false,
           isLoading: false
         });

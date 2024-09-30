@@ -38,7 +38,7 @@ export const fetchMedicineOptions = async () => {
   }
 
   try {
-    const response = await axios.get(`${API_URL}/v1/unique_drugs`);
+    const response = await axios.get(`${API_URL}/v1/drugs/unique_drugs`);
     devLog('Medicine options response:', response.data);
     const medicines = response.data;
     setCachedData('medicineOptions', medicines);
@@ -57,7 +57,7 @@ export const fetchDistrictOptions = async () => {
   }
 
   try {
-    const response = await axios.get(`${API_URL}/v1/unique_districts`);
+    const response = await axios.get(`${API_URL}/v1/drugs/unique_districts`);
     devLog('District options response:', response.data);
     const districts = response.data;
     setCachedData('districtOptions', districts);
@@ -80,7 +80,7 @@ export const searchDrugs = async (selectedDrug, selectedDistrict) => {
 
     devLog('Parsed drug info:', { searchTerm, concent, nombreFormaFarmaceutica });
 
-    const response = await axios.post(`${API_URL}/v1/filtered_drugs`, {
+    const response = await axios.post(`${API_URL}/v1/drugs/filtered_drugs`, {
       selected_drug: searchTerm,
       concent,
       nombreFormaFarmaceutica,
