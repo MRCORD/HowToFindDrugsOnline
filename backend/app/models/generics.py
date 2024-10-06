@@ -1,18 +1,27 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import List
+from datetime import datetime
 
-class GenericBase(BaseModel):
-    name: str
-    description: Optional[str]
+class RawGenericData(BaseModel):
+    Cod_Prod: int
+    Nom_Prod: str
+    concent: str
+    Nom_Form_Farm: str
+    Presentac: str
+    Situacioon: str
 
-class GenericInDB(GenericBase):
-    id: str = Field(..., alias="_id")
+class GenericVariation(BaseModel):
+    Cod_Prod: int
+    concent: str
+    Nom_Form_Farm: str
+    Presentac: str
+    Situacioon: str
+    last_modified: datetime = datetime.utcnow()
 
-class GenericCreate(GenericBase):
-    pass
+class GenericProduct(BaseModel):
+    product: str
+    variations: List[GenericVariation]
+    last_updated: datetime = datetime.utcnow()
 
-class GenericUpdate(GenericBase):
-    pass
-
-class GenericResponse(GenericBase):
-    id: str
+class UpdateGenericRequest(BaseModel):
+    raw_data: List[RawGenericData]

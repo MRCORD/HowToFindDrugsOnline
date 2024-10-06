@@ -20,6 +20,18 @@ class MongoService:
         
         return ResponseModel(documents=documents)
 
+    def update_mongo(self, query: MongoQuery) -> None:
+        database = self.db.client[query.db]
+        collection = database[query.collection]
+        if not isinstance(query.filter, dict):
+            raise TypeError("filter must be an instance of dict")
+        collection.update_one(query.filter, query.update)
+
+    def insert_one(self, document: dict) -> None:
+        database = self.db.client[document['db']]
+        collection = database[document['collection']]
+        collection.insert_one(document['data'])
+
     def _convert_objectid(self, obj):
         if isinstance(obj, ObjectId):
             return str(obj)
