@@ -1,4 +1,4 @@
-from app.models.drugs import FilteredDrugRequest, FilteredDrugsResponse, DrugResponse
+from app.models.drugs import FilteredDrugRequest, FilteredDrugsResponse, FilteredDrugResponse, DrugResponse
 from app.models.mongo import MongoQuery
 from app.services.mongo_service import MongoService
 from typing import List, Dict, Any
@@ -80,7 +80,22 @@ class DrugsService:
         )
         results = self.mongo_service.consult_mongo(results_query)
 
-        return FilteredDrugsResponse(totalCount=total_count, drugs=results.documents)
+        # Format the results to match FilteredDrugResponse
+        formatted_drugs = [
+            FilteredDrugResponse(
+                nombreProducto=drug.get('nombreProducto', ''),
+                concent=drug.get('concent', ''),
+                nombreFormaFarmaceutica=drug.get('nombreFormaFarmaceutica', ''),
+                precio2=drug.get('precio2', 0.0),
+                nombreComercial=drug.get('nombreComercial', ''),
+                direccion=drug.get('direccion', ''),
+                googleMaps_search_url=drug.get('googleMaps_search_url', ''),
+                googleMapsUri=drug.get('googleMapsUri', '')
+            )
+            for drug in results.documents
+        ]
+
+        return FilteredDrugsResponse(totalCount=total_count, drugs=formatted_drugs)
 
     def get_unique_districts(self) -> List[Dict[str, Any]]:
         query = MongoQuery(

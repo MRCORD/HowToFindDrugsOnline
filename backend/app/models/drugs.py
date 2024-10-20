@@ -22,8 +22,8 @@ class FilteredDrugResponse(BaseModel):
     precio2: float
     nombreComercial: str
     direccion: str
-    googleMaps_search_url: Optional[str]
-    googleMapsUri: Optional[str]
+    googleMaps_search_url: Optional[str] = Field(default="")
+    googleMapsUri: Optional[str] = Field(default="")
 
 class FilteredDrugsResponse(BaseModel):
     totalCount: int
