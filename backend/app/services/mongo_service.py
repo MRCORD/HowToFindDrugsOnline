@@ -1,5 +1,6 @@
 from app.models.mongo import MongoQuery, ResponseModel
 from bson import ObjectId
+from pymongo.results import InsertOneResult, UpdateResult
 
 class MongoService:
     def __init__(self, db):
@@ -20,17 +21,17 @@ class MongoService:
         
         return ResponseModel(documents=documents)
 
-    def update_mongo(self, query: MongoQuery) -> None:
+    def update_mongo(self, query: MongoQuery) -> UpdateResult:
         database = self.db.client[query.db]
         collection = database[query.collection]
         if not isinstance(query.filter, dict):
             raise TypeError("filter must be an instance of dict")
-        collection.update_one(query.filter, query.update)
+        return collection.update_one(query.filter, query.update)
 
-    def insert_one(self, document: dict) -> None:
+    def insert_one(self, document: dict) -> InsertOneResult:
         database = self.db.client[document['db']]
         collection = database[document['collection']]
-        collection.insert_one(document['data'])
+        return collection.insert_one(document['data'])
 
     def _convert_objectid(self, obj):
         if isinstance(obj, ObjectId):
