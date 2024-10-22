@@ -1,7 +1,12 @@
 import requests
+import time
+import random
 from app.models.searchterm import RawSearchTermData
 
 class RateLimitException(Exception):
+    pass
+
+class ForbiddenException(Exception):
     pass
 
 class SearchTermsScraper:
@@ -10,12 +15,20 @@ class SearchTermsScraper:
         self.headers = {
             "Origin": "https://opm-digemid.minsa.gob.pe",
             "Referer": "https://opm-digemid.minsa.gob.pe/",
-            "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
-            "Content-Type": "application/json"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive"
         }
+        self.session = requests.Session()
 
     def fetch_search_terms(self, search_term):
         try:
+            # Mimic human behavior by adding a random delay
+            time.sleep(random.uniform(1, 3))
+
             payload = {
                 "filtro": {
                     "nombreProducto": search_term,
@@ -24,10 +37,12 @@ class SearchTermsScraper:
                 }
             }
 
-            response = requests.post(self.url, headers=self.headers, json=payload)
+            response = self.session.post(self.url, headers=self.headers, json=payload)
             
             if response.status_code == 429:
                 raise RateLimitException("Rate limit exceeded")
+            elif response.status_code == 403:
+                raise ForbiddenException("Access forbidden")
             
             response.raise_for_status()
             
@@ -49,10 +64,10 @@ class SearchTermsScraper:
                 ))
             
             return search_terms_data
-        except RateLimitException:
+        except (RateLimitException, ForbiddenException):
             raise
         except Exception as e:
             print(f"Error fetching search terms data: {e}")
-            raise  # Re-raise the exception to be caught by the retry logic
+            raise
 
 scraper = SearchTermsScraper()

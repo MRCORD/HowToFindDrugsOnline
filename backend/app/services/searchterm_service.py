@@ -1,11 +1,12 @@
 import logging
+import random
 import time
 from app.models.searchterm import RawSearchTermData
 from app.models.mongo import MongoQuery
 from app.services.mongo_service import MongoService
 from typing import List, Dict, Optional
 from datetime import datetime
-from app.tasks.scrapers.searchterm_scraper import scraper, RateLimitException
+from app.tasks.scrapers.searchterm_scraper import scraper, RateLimitException, ForbiddenException
 from bson import ObjectId
 
 class SearchTermService:
@@ -38,20 +39,24 @@ class SearchTermService:
                 self.logger.warning(f"Rate limit hit for {search_term}. Retrying in {self.delay} seconds.")
                 time.sleep(self.delay)
                 self.delay *= 2  # Exponential backoff
+            except ForbiddenException:
+                self.logger.error(f"Access forbidden for {search_term}. Waiting for {self.delay} seconds before retry.")
+                time.sleep(self.delay)
+                self.delay *= 2  # Exponential backoff
             except Exception as e:
                 self.logger.error(f"Error fetching search terms for {search_term}: {str(e)}")
                 return None
         
         self.logger.error(f"Max retries reached for {search_term}")
         return None
-    
+
     def process_catalog_items(self, limit: Optional[int] = None):
         catalog_items = self.get_catalog_items(limit)
         self.logger.info(f"Processing {len(catalog_items)} catalog items")
         for item in catalog_items:
             self.logger.info(f"Processing search term: {item['name']}")
             self.process_search_term(item['name'])
-            time.sleep(1)  # Add a small delay between items to avoid overwhelming the API
+            time.sleep(random.uniform(2, 5))  # Add a random delay between items to mimic human behavior
         self.logger.info("Catalog processing completed")
 
     def process_search_term(self, search_term: str):
