@@ -5,6 +5,7 @@ from app.services.mongo_service import MongoService
 from app.services.catalog_service import CatalogService
 from app.services.searchterm_service import SearchTermService
 from app.services.medicine_service import MedicineService
+from app.services.pharmacy_service import PharmacyService
 
 def get_mongo_service():
     return MongoService(db)
@@ -24,3 +25,6 @@ def get_searchterm_service():
 
 def get_medicine_service():
     return MedicineService(db)
+
+def get_pharmacy_service():
+    return PharmacyService(db)

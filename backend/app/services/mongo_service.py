@@ -1,13 +1,14 @@
-from app.models.mongo import MongoQuery, ResponseModel
+from typing import Dict, Any, Optional, List
 from bson import ObjectId
-from pymongo.results import InsertOneResult, UpdateResult
+from app.models.mongo import MongoQuery, ResponseModel
 
 class MongoService:
     def __init__(self, db):
         self.db = db
+        self.client = db.client
 
     def consult_mongo(self, query: MongoQuery) -> ResponseModel:
-        database = self.db.client[query.db]
+        database = self.client[query.db]
         collection = database[query.collection]
         
         if query.aggregation:
@@ -21,17 +22,23 @@ class MongoService:
         
         return ResponseModel(documents=documents)
 
-    def update_mongo(self, query: MongoQuery) -> UpdateResult:
-        database = self.db.client[query.db]
+    def update_mongo(self, query: MongoQuery) -> Any:
+        database = self.client[query.db]
         collection = database[query.collection]
         if not isinstance(query.filter, dict):
             raise TypeError("filter must be an instance of dict")
         return collection.update_one(query.filter, query.update)
 
-    def insert_one(self, document: dict) -> InsertOneResult:
-        database = self.db.client[document['db']]
+    def insert_one(self, document: Dict[str, Any]) -> Any:
+        database = self.client[document['db']]
         collection = database[document['collection']]
         return collection.insert_one(document['data'])
+
+    def insert_many(self, documents: Dict[str, Any]) -> Any:
+        """Insert many documents at once"""
+        database = self.client[documents['db']]
+        collection = database[documents['collection']]
+        return collection.insert_many(documents['data'])
 
     def _convert_objectid(self, obj):
         if isinstance(obj, ObjectId):

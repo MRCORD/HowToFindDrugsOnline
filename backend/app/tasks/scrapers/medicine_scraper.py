@@ -21,24 +21,21 @@ class MedicineScraper:
 
     def search_medicines(self, product_data: Dict[str, Any], region_data: Dict[str, Any], exact_search: bool = False) -> Optional[Dict[str, Any]]:
         try:
-            if exact_search:
-                nombre_producto = product_data.get('nombreProducto')
-            else:
-                nombre_producto = None
-
             payload = {
                 "filtro": {
-                    "codigoProducto": product_data.get('codigoProducto'),
-                    "codigoDepartamento": region_data.get('codigoDepartamento'),
-                    "codigoProvincia": region_data.get('codigoProvincia'),
-                    "codigoUbigeo": region_data.get('codigoUbigeo'),
+                    "codigoProducto": product_data.get("codigoProducto"),
+                    "codigoDepartamento": region_data.get("codigoDepartamento"),
+                    "codigoProvincia": region_data.get("codigoProvincia"),
+                    "codigoUbigeo": region_data.get("codigoUbigeo"),
                     "codTipoEstablecimiento": None,
                     "catEstablecimiento": None,
-                    "codGrupoFF": product_data.get('codGrupoFF'),
-                    "concent": product_data.get('concent'),
-                    "tamanio": 1000000,
+                    "codGrupoFF": product_data.get("codGrupoFF"),
+                    "concent": product_data.get("concent", ""),
+                    "nombreProducto": product_data.get("nombreProducto") if exact_search else None,
+                    "nombreEstablecimiento": None,
+                    "nombreLaboratorio": None,
                     "pagina": 1,
-                    "nombreProducto": nombre_producto
+                    "tamanio": 100
                 }
             }
 
