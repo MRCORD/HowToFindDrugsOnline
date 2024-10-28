@@ -46,13 +46,11 @@ class PharmacyScraper:
             soup = BeautifulSoup(response.text, 'html.parser')
             pharmacies = []
 
-            # Find the results table
             table = soup.find('table', {'id': 'tresultados'})
             if not table:
                 self.logger.error("Could not find results table")
                 return PharmacyResponse(coincidencias=0, data=[])
 
-            # Process each row in the table
             for row in table.find_all('tr'):
                 cells = row.find_all('td')
                 if len(cells) >= 10 and cells[1].text.strip().isdigit():
@@ -73,11 +71,8 @@ class PharmacyScraper:
                         self.logger.error(f"Error parsing pharmacy row: {str(e)}")
                         continue
 
-            # Get coincidencias from the actual number of pharmacies found
-            coincidencias = len(pharmacies)
-
             return PharmacyResponse(
-                coincidencias=coincidencias,
+                coincidencias=len(pharmacies),
                 data=pharmacies
             )
 

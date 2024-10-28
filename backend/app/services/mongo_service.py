@@ -29,6 +29,14 @@ class MongoService:
             raise TypeError("filter must be an instance of dict")
         return collection.update_one(query.filter, query.update)
 
+    def update_many(self, query: MongoQuery) -> Any:
+        """Update multiple documents that match the filter"""
+        database = self.client[query.db]
+        collection = database[query.collection]
+        if not isinstance(query.filter, dict):
+            raise TypeError("filter must be an instance of dict")
+        return collection.update_many(query.filter, query.update)
+
     def insert_one(self, document: Dict[str, Any]) -> Any:
         database = self.client[document['db']]
         collection = database[document['collection']]

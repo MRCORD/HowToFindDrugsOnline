@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 
 class RawPharmacyData(BaseModel):
@@ -21,3 +21,18 @@ class PharmacySearchRequest(BaseModel):
 class PharmacyResponse(BaseModel):
     coincidencias: int
     data: List[RawPharmacyData]
+
+class PharmacyUpdateResult(BaseModel):
+    total_unique_codestabs: int
+    pharmacies_found: int
+    medicines_updated: int
+    pharmacies_not_found: int
+    not_found_codestabs: List[str]
+
+class PharmacyUpdateStatus(BaseModel):
+    status: str = "idle"  # idle, running, completed, failed
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    current_progress: Optional[Dict[str, int]] = None
+    error: Optional[str] = None
+    result: Optional[PharmacyUpdateResult] = None
