@@ -36,3 +36,9 @@ class PharmacyUpdateStatus(BaseModel):
     current_progress: Optional[Dict[str, int]] = None
     error: Optional[str] = None
     result: Optional[PharmacyUpdateResult] = None
+
+class TransformedPharmacyResponse(BaseModel):
+    data: List[Dict]
+
+class TransformedPharmacyBatchResponse(BaseModel):
+    data: List[Dict]

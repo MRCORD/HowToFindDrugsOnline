@@ -1,9 +1,9 @@
 import logging
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from datetime import datetime
 from threading import Lock
 from bson import ObjectId
-from app.models.pharmacy import PharmacySearchRequest, PharmacyResponse, PharmacyUpdateResult, PharmacyUpdateStatus
+from app.models.pharmacy import PharmacySearchRequest, PharmacyResponse, PharmacyUpdateResult, PharmacyUpdateStatus, TransformedPharmacyResponse
 from app.models.mongo import MongoQuery
 from app.services.mongo_service import MongoService
 from app.tasks.scrapers.pharmacy_scraper import scraper
@@ -175,3 +175,61 @@ class PharmacyService:
                 self.__class__._update_status.status = "failed"
                 self.__class__._update_status.end_time = datetime.utcnow()
                 self.__class__._update_status.error = str(e)
+
+    def transform_pharmacy_data(self, data: PharmacyResponse) -> TransformedPharmacyResponse:
+        transformed_data = []
+        for pharmacy in data.data:
+            transformed_data.append({
+                "codEstab": pharmacy.NroRegistro,
+                "nombreComercial": pharmacy.NombreComercial,
+                "ruc": pharmacy.RUC,
+                "directorTecnico": pharmacy.RazonSocial,
+                "horarioAtencion": None,  # Placeholder
+                "setcodigo": None,
+                "contacto": {
+                    "telefono": None,  # Placeholder
+                    "email": None  # Placeholder
+                },
+                "locacion": {
+                    "departamento": pharmacy.Ubigeo.split('/')[0],
+                    "provincia": pharmacy.Ubigeo.split('/')[1],
+                    "distrito": pharmacy.Ubigeo.split('/')[2],
+                    "ubigeo": None,
+                    "direccion": pharmacy.Direccion
+                },
+                "google_maps": {
+                    "place_id": None,
+                    "googleMaps_search_url": None,
+                    "googleMapsUri": None,
+                    "displayName": None,
+                    "formatedAddress": None,
+                    "coordinates": {
+                        "latitude": None,
+                        "longitude": None
+                    }
+                }
+            })
+        return TransformedPharmacyResponse(data=transformed_data)
+
+    def get_transformed_pharmacies_by_registration_numbers(self, registration_numbers: List[str]) -> List[Dict]:
+        transformed_responses = []
+        for reg_number in registration_numbers:
+            search_request = PharmacySearchRequest(registration_number=reg_number)
+            raw_data = self.get_raw_pharmacies(search_request)
+            if raw_data:
+                transformed_data = self.transform_pharmacy_data(raw_data)
+                transformed_responses.extend(transformed_data.data)
+        return transformed_responses
+
+    def insert_transformed_pharmacies(self, transformed_data: List[Dict]) -> str:
+        try:
+            insert_query = {
+                "db": "health",
+                "collection": "pharmacies",
+                "data": transformed_data
+            }
+            self.mongo_service.insert_many(insert_query)
+            return "Data inserted successfully"
+        except Exception as e:
+            self.logger.error(f"Error inserting transformed pharmacy data: {str(e)}")
+            return "Failed to insert data"
